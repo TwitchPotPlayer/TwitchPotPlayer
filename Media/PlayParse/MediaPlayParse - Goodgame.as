@@ -757,6 +757,12 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 HostOpenConsole();
 HostPrintUTF8("HEH.");
 
+array<string> qualities = {"", "_720", "_480", "_240"};
+array<string> qualitiesStr = {"Source", "720", "480", "240"};
+string oldApi = "http://hls.goodgame.ru/hls/";
+string newApi = "https://cdnnow.goodgame.ru/hls/";
+bool isOldApi = false;
+
 string nickname = HostRegExpParse(path, "https://goodgame.ru/channel/([-a-zA-Z0-9_]+)");
 HostPrintUTF8(nickname);
 
@@ -794,6 +800,34 @@ HostPrintUTF8(jsonStatus);
 string m3u8Api = "https://cdnnow.goodgame.ru/hls/" + channelId + ".m3u8";
 HostPrintUTF8(m3u8Api);
 MetaData["title"] = titleChannel;
+MetaData["content"] = titleChannel;
+
+
+	
+
+if (@QualityList !is null) {
+	for (int k = 0; k < 4; k++) {
+		string currentApi = newApi;
+		string currentQuality = qualities[k];
+		QualityListItem qualityItem;
+		qualityItem.itag = youtubeProfiles[k].iTag;
+		qualityItem.quality = qualitiesStr[k];
+		qualityItem.qualityDetail = currentQuality;
+		if (isOldApi) {
+			currentApi = oldApi;
+			qualityItem.itag = youtubeProfiles[k + 4].iTag;
+			qualityItem.quality += " old API";
+		}
+		// itemm2.url = "https://cdnnow.goodgame.ru/hls/1053_480.m3u8";
+		qualityItem.url = currentApi + channelId + currentQuality + ".m3u8";
+		// itemm2.url = "https://cdnnow.goodgame.ru/hls/" + channelId + "_480.m3u8";
+		AppendQualityList(QualityList, qualityItem, qualityItem.url);
+		if (k == 3 && !isOldApi) {
+			k = -1;
+			isOldApi = true;
+		}
+	}
+}
 
 QualityListItem itemm;
 // string url;
@@ -827,16 +861,11 @@ itemm2.format = "mp4";
 
 array<dictionary> Hheh;
 
-if (@QualityList !is null) {
-	HostPrintUTF8("TEST1");
-	AppendQualityList(QualityList, itemm, m3u8Api);
-	AppendQualityList(QualityList, itemm2, itemm2.url);
-}
-if (@QualityList is null) {
-	// array<dictionary> QualityList = Hheh;
-	HostPrintUTF8("TEST2");
-	AppendQualityList(Hheh, itemm, m3u8Api);
-}
+// if (@QualityList !is null) {
+// 	HostPrintUTF8("TEST1");
+// 	AppendQualityList(QualityList, itemm, m3u8Api);
+// 	AppendQualityList(QualityList, itemm2, itemm2.url);
+// }
 
 return m3u8Api;
 // &sig={token_sig}&token={token}
