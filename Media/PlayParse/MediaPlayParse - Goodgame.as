@@ -1,5 +1,5 @@
 ﻿/*
-	YouTube media parse
+	GoodGame media parse
 */	
 
 //	string GetTitle() 									-> get title for UI
@@ -17,7 +17,7 @@
 
 string GetTitle()
 {
-	return "YouTube";
+	return "GoodGame";
 }
 
 string GetVersion()
@@ -27,7 +27,7 @@ string GetVersion()
 
 string GetDesc()
 {
-	return "https://www.youtube.com/";
+	return "https://goodgame.ru/";
 }
 
 string YOUTUBE_MP_URL	="://www.youtube.com/";
@@ -197,21 +197,6 @@ array<YOUTUBE_PROFILES> youtubeProfilesExt =
 	YOUTUBE_PROFILES(304, y_dash_mp4_video, 1440, "mp4"),
 };
 
-int GetYouTubeQuality(int iTag)
-{
-	for (int i = 0, len = youtubeProfiles.size(); i < len; i++)
-	{
-		if (iTag == youtubeProfiles[i].iTag) return youtubeProfiles[i].quality;
-	}
-
-	for (int i = 0, len = youtubeProfilesExt.size(); i < len; i++)
-	{
-		if (iTag == youtubeProfilesExt[i].iTag) return youtubeProfilesExt[i].quality;
-	}
-
-	return 0;
-}
-
 YOUTUBE_PROFILES getProfile(int iTag, bool ext = false)
 {
 	for (int i = 0, len = youtubeProfiles.size(); i < len; i++)
@@ -229,28 +214,6 @@ YOUTUBE_PROFILES getProfile(int iTag, bool ext = false)
 
 	YOUTUBE_PROFILES youtubeProfileEmpty(0, y_unknown, 0, "");
 	return youtubeProfileEmpty;
-}
-
-bool SelectBestProfile(int &itag_final, string &ext_final, int itag_current, YOUTUBE_PROFILES sets)
-{
-	YOUTUBE_PROFILES current = getProfile(itag_current);
-
-	if (current.iTag <= 0 || current.type != sets.type || current.quality > sets.quality)
-	{
-		return false;
-	}
-
-	if (itag_final != 0)
-	{
-		YOUTUBE_PROFILES fin = getProfile(itag_final);
-
-		if (current.quality < fin.quality) return false;
-	}
-
-	itag_final = current.iTag;
-	ext_final = "." + current.ext;
-
-	return true;
 }
 
 class QualityListItem
@@ -283,61 +246,6 @@ class QualityListItem
 		return ret;
 	}	
 };
-
-void AppendQualityList(array<dictionary> &QualityList, QualityListItem &item, string url)
-{
-	YOUTUBE_PROFILES pPro = getProfile(item.itag, true);
-
-	if (pPro.iTag > 0)
-	{
-		bool Detail = false;
-
-		if (Is60Frame(item.itag) && item.fps < 1) item.fps = 60.0;
-		item.url = url;
-		if (item.format.empty()) item.format = pPro.ext;
-		if (item.quality.empty())
-		{
-			if (pPro.type == y_dash_mp4_audio || pPro.type == y_webm_audio)
-			{
-				string quality = formatInt(pPro.quality) + "K";
-				if (item.bitrate.empty()) item.quality = quality;
-				else item.quality = item.bitrate;
-			}
-			else
-			{
-				Detail = true;
-				if (!item.bitrate.empty())
-				{
-					if (!item.resolution.empty())
-					{
-						int p = item.resolution.find("x");
-
-						if (p > 0)
-						{
-							item.quality = item.resolution.substr(p + 1);
-							item.quality += "P";
-						}
-					}
-				}
-			}
-		}
-		
-		if (Detail && !item.bitrate.empty()) item.quality = item.bitrate + ", " + item.quality;
-
-		item.qualityDetail = item.quality;
-		if (Detail)
-		{
-			if (item.resolution.empty()) item.qualityDetail = formatInt(pPro.quality) + "P";
-			else item.qualityDetail = item.resolution;
-			if (!item.bitrate.empty()) item.qualityDetail = item.bitrate + ", " + item.qualityDetail;
-		}
-		QualityList.insertLast(item.toDictionary());
-	}
-	else
-	{
-		HostPrintUTF8("  *unknown itag: " + formatInt(item.itag) + "\n");
-	}
-}
 
 string GetEntry(string &pszBuff, string pszMatchStart, string pszMatchEnd)
 {
@@ -377,89 +285,18 @@ string MakeYouTubeUrl(string url)
 	return url;
 }
 
-string PlayerYouTubeSearchJS(string data)
-{
-	string find1 = "html5player.js";
-	int s = data.find(find1);
-
-	if (s >= 0)
-	{
-		int e = s + find1.size();
-		bool found = false;
-
-		while (s > 0)
-		{
-			if (data.substr(s, 1) == "\"")
-			{
-				s++;
-				found = true;
-				break;
-			}
-			s--;
-		}
-		if (found)
-		{
-			string ret = data.substr(s, e - s);
-
-			return ret;
-		}
-	}
-
-	s = data.find(MATCH_JS_START);
-	if (s >= 0)
-	{
-		s += 6;
-		int e = data.find(".js", s);
-
-		if (e > s)
-		{
-			string ret = data.substr(s, e + 3 - s);
-
-			ret.Trim();
-			ret.Trim("\"");
-			return ret;
-		}
-	}
-
-	s = data.find("/jsbin/player-");
-	if (s >= 0)
-	{
-		s += 6;
-		int e = data.find(".js", s);
-
-		while (s > 0)
-		{
-			if (data.substr(s, 1) == "\"") break;
-			else s--;
-		}
-		if (e > s)
-		{
-			string ret = data.substr(s, e + 3 - s);
-
-			ret.Trim();
-			ret.Trim("\"");
-			return ret;
-		}
-	}
-
-	return "";
-}
-
-enum youtubeFuncType
-{
+enum youtubeFuncType {
 	funcNONE = -1,
 	funcDELETE,
 	funcREVERSE,
 	funcSWAP
 };
 
-void Delete(string &a, int b)
-{
+void Delete(string &a, int b) {
 	a.erase(0, b);
 }
 
-void Swap(string &a, int b)
-{
+void Swap(string &a, int b) {
 	uint8 c = a[0];
 
 	b %= a.size();
@@ -467,8 +304,7 @@ void Swap(string &a, int b)
 	a[b] = c;
 };
 
-void Reverse(string &a)
-{
+void Reverse(string &a) {
 	int len = a.size();
 
 	for (int i = 0; i < len / 2; ++i)
@@ -511,166 +347,6 @@ string GetCodecName(string type)
 	type = ReplaceCodecName(type, "mp4a");
 	
 	return type;
-}
-
-string GetFunction(string str)
-{
-	string ret = HostRegExpParse(str, "\"signature\",([a-zA-Z0-9]+)\\(");
-	if (!ret.empty()) return ret;
-
-	string r, sig = "\"signature\"";
-	int p = 0;
-
-	while (true)
-	{
-		int e = str.find(sig, p);
-
-		if (e < 0) break;
-		int s1 = str.find("(", e);
-		int s2 = str.find(")", e);
-		if (s1 > s2)
-		{
-			p = e + 10;
-			continue;
-		}
-		p = e + sig.size() + 1;
-		r = str.substr(p, s1 - p);
-		break;
-	}
-	r.Trim(",");
-	r.Trim();
-	r.Trim(",");
-	r.Trim();
-	return r;
-}
-
-string SignatureDecode(string url, string signature, string append, string data, string js_data, array<youtubeFuncType> &JSFuncs, array<int> &JSFuncArgs)
-{
-	string FunctionName;
-	
-	if (JSFuncs.size() == 0 && !js_data.empty())
-	{
-		string funcName = GetFunction(js_data);
-
-		if (!funcName.empty())
-		{
-			string funcRegExp = funcName + "=function\\(a\\)\\{([^\\n]+)\\};";
-			string funcBody = HostRegExpParse(data, funcRegExp);
-
-			if (funcBody.empty())
-			{
-				string varfunc = funcName + "=function(a){";
-
-				funcBody = GetEntry(js_data, varfunc, "};");
-			}
-			if (!funcBody.empty())
-			{
-				string funcGroup;
-				array<string> funcList;
-				array<string> funcCodeList;
-
-				array<string> code = funcBody.split(";");
-				for (int i = 0, len = code.size(); i < len; i++)
-				{
-					string line = code[i];
-					
-					if (!line.empty())
-					{
-						if (line.find("split") >= 0 || line.find("return") >= 0) continue;
-						funcList.insertLast(line);
-						if (funcGroup.empty())
-						{
-							int k = line.find(".");
-
-							if (k > 0) funcGroup = line.Left(k);
-						}
-					}
-				}
-
-				if (!funcGroup.empty())
-				{
-					string tmp = GetEntry(js_data, "var " + funcGroup + "={", "};");
-
-					if (!tmp.empty())
-					{
-						tmp.replace("\n", "");
-						funcCodeList = tmp.split("},");
-					}
-				}
-
-				if (!funcList.empty() && !funcCodeList.empty())
-				{
-					funcGroup += ".";
-
-					for (int j = 0, len = funcList.size(); j < len; j++)
-					{
-						string func = funcList[j];
-						
-						if (!func.empty())
-						{
-							int funcArg = 0;
-							string funcArgs = GetEntry(func, "(", ")");
-							array<string> args = funcArgs.split(",");
-							
-							if (args.size() >= 1)
-							{
-								string arg = args[args.size() - 1];
-
-								funcArg = parseInt(arg);
-							}
-
-							string funcName = GetEntry(func, funcGroup, "(");
-							funcName += ":function";
-
-							youtubeFuncType funcType = youtubeFuncType::funcNONE;
-							for (int k = 0, len = funcCodeList.size(); k < len; k++)
-							{
-								string funcCode = funcCodeList[k];
-								
-								if (funcCode.find(funcName) >= 0)
-								{
-									if (funcCode.find("splice") > 0) funcType = youtubeFuncType::funcDELETE;
-									else if (funcCode.find("reverse") > 0) funcType = youtubeFuncType::funcREVERSE;
-									else if (funcCode.find(".length]") > 0) funcType = youtubeFuncType::funcSWAP;
-									break;
-								}
-							}
-							if (funcType != youtubeFuncType::funcNONE)
-							{
-								JSFuncs.insertLast(funcType);
-								JSFuncArgs.insertLast(funcArg);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if (!JSFuncs.empty() && JSFuncs.size() == JSFuncArgs.size())
-	{
-		for (int i = 0, len = JSFuncs.size(); i < len; i++)
-		{
-			youtubeFuncType func = JSFuncs[i];
-			int arg = JSFuncArgs[i];
-
-			switch (func)
-			{
-			case youtubeFuncType::funcDELETE:
-				Delete(signature, arg);
-				break;
-			case youtubeFuncType::funcSWAP:
-				Swap(signature, arg);
-				break;
-			case youtubeFuncType::funcREVERSE:
-				Reverse(signature);
-				break;
-			}
-		}
-		url = url + append + signature;
-	}
-	
-	return url;
 }
 
  bool PlayerYouTubeCheck(string url)
@@ -722,43 +398,13 @@ string TrimFloatString(string str)
 	return str;
 }
 
-string GetBitrateString(int64 val)
-{
-	string ret;
-
-	if (val >= 1000 * 1000)
-	{
-		val = val / 1000;
-		ret = formatFloat(val / 1000.0, "", 0, 1);
-		ret = TrimFloatString(ret);
-		ret += "M";
-	}
-	else if (val >= 1000)
-	{
-		ret = formatFloat(val / 1000.0, "", 0, 1);
-		ret = TrimFloatString(ret);
-		ret += "K";
-	}
-	else ret = formatInt(val);
-	return ret;
-}
-
-string XMLAttrValue(XMLElement Element, string name)
-{
-	string ret;
-	XMLAttribute Attr = Element.FindAttribute(name);
-
-	if (Attr.isValid()) ret = Attr.asString();
-	return ret;
-}
-
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList) {
 	HostOpenConsole();
 	HostPrintUTF8("HEH.");
 
 	//Some vars for quality adding.
 	array<string> qualities = {"", "_720", "_480", "_240"};
-	array<string> qualitiesStr = {"Source", "720", "480", "240"};
+	array<string> qualitiesStr = {"Source", "720p", "480p", "240p"};
 	string oldApi = "http://hls.goodgame.ru/hls/";
 	string newApi = "https://cdnnow.goodgame.ru/hls/";
 	bool isOldApi = false;
@@ -806,16 +452,16 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 			string currentApi = newApi;
 			string currentQuality = qualities[k];
 			QualityListItem qualityItem;
-			qualityItem.itag = youtubeProfiles[k].iTag;
+			qualityItem.itag = k;
 			qualityItem.quality = qualitiesStr[k];
-			qualityItem.qualityDetail = currentQuality;
+			qualityItem.qualityDetail = qualitiesStr[k];
 			if (isOldApi) {
 				currentApi = oldApi;
-				qualityItem.itag = youtubeProfiles[k + 4].iTag;
-				qualityItem.quality += " old API";
+				qualityItem.itag = k + 4;
+				qualityItem.qualityDetail += " old API";
 			}
 			qualityItem.url = currentApi + channelId + currentQuality + ".m3u8";
-			AppendQualityList(QualityList, qualityItem, qualityItem.url);
+			QualityList.insertLast(qualityItem.toDictionary());
 			if (k == 3 && !isOldApi) {
 				k = -1;
 				isOldApi = true;
@@ -981,133 +627,4 @@ string FixHtmlSymbols(string inStr)
 	inStr.replace(" on Vimeo", "");
 
 	return inStr;
-}
-
-void ParserPlaylistItem(string html, int start, int len, array<dictionary> &pls)
-{
-	string block = html.substr(start, len);
-	string szEnd = block;
-	array<dictionary> match;
-	string data_video_id;
-	string data_video_username;
-	string data_video_title;
-	string data_thumbnail_url;
-	
-	while (HostRegExpParse(szEnd, "([a-z-]+)=\"([^\"]+)\"", match))
-	{
-		if (match.size() == 3)
-		{
-			string propHeader;
-			string propValue;
-			
-			 match[1].get("first", propHeader);
-			 match[2].get("first", propValue);
-			 propHeader.Trim();
-			 propValue.Trim();
-
-			// data-video-id, data-video-clip-end, data-index, data-video-username, data-video-title, data-video-clip-start.
-			if (propHeader == "data-video-id") data_video_id = propValue;
-			else if (propHeader == "data-video-username") data_video_username = FixHtmlSymbols(propValue);
-			else if (propHeader == "data-video-title" || propHeader == "data-title") data_video_title = FixHtmlSymbols(propValue);
-			else if (propHeader == "data-thumbnail-url") data_thumbnail_url = propValue;
-		}
-
-		match[0].get("second", szEnd);
-	}
-	
-	if (!data_video_id.empty())
-	{
-		dictionary item;
-		
-		item["url"] = "http://www.youtube.com/watch?v=" + data_video_id;
-		item["title"] = data_video_title;
-		if (data_thumbnail_url.empty())
-		{
-			int p = html.find("yt-thumb-clip", start);
-			
-			if (p >= 0)
-			{
-				int img = html.find(data_video_id, p);
-				
-				if (img > p)
-				{
-					while (img > p)
-					{
-						string ch = html.substr(img, 1);
-						
-						if (ch == "\"" || ch == "=") break;
-						else img--;
-					}
-
-					int end = html.find(".jpg", img);
-					if (end > img)
-					{
-						string thumb = html.substr(img, end + 4 - img);
-
-						thumb.Trim();
-						thumb.Trim("\"");
-						thumb.Trim("=");
-						if (thumb.find("://") < 0)
-						{
-							if (thumb.find("//") == 0) thumb = "http:" + thumb;
-							else thumb = "http://" + thumb;
-						}
-						data_thumbnail_url = thumb;
-					}
-				}
-			}
-		}
-		if (!data_thumbnail_url.empty()) item["thumbnail"] = data_thumbnail_url;
-		
-		if (block.find("currently-playing") >= 0) item["current"] = "1";
-		pls.insertLast(item);
-	}
-}
-
-string MATCH_PLAYLIST_ITEM_START	= "<li class=\"yt-uix-scroller-scroll-unit ";
-string MATCH_PLAYLIST_ITEM_START2	= "<tr class=\"pl-video yt-uix-tile ";
-
-array<dictionary> PlaylistParse(const string &in path)
-{
-	array<dictionary> ret;
-	
-	if (PlaylistCheck(path))
-	{
-		ret = PlayerYouTubePlaylistByAPI(path);
-		if (ret.size() > 0) return ret;
-
-		string html = HostUrlGetString(RepleaceYouTubeUrl(path));
-		int p = html.find(MATCH_PLAYLIST_ITEM_START);		
-		if (p >= 0)
-		{
-			while (p >= 0)
-			{
-				p += MATCH_PLAYLIST_ITEM_START.size();
-
-				int end = html.find(">", p);
-				if (end > p) ParserPlaylistItem(html, p, end - p, ret);
-				
-				p = html.find(MATCH_PLAYLIST_ITEM_START, p);
-			}
-		}
-		else
-		{
-			p = html.find(MATCH_PLAYLIST_ITEM_START2);
-
-			if (p >= 0)
-			{
-				while (p >= 0)
-				{
-					p += MATCH_PLAYLIST_ITEM_START2.size();
-
-					int end = html.find(">", p);
-					if (end > p) ParserPlaylistItem(html, p, end - p, ret);
-					
-					p = html.find(MATCH_PLAYLIST_ITEM_START2, p);
-				}
-			}
-		}
-	}
-	
-	return ret;
 }
