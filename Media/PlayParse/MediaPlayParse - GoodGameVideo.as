@@ -693,6 +693,9 @@ string SignatureDecode(string url, string signature, string append, string data,
 
 bool PlayitemCheck(const string &in path)
 {
+	if (isItGoodGameVideo(path)) {
+		return true;
+	}
 	if (PlayerYouTubeCheck(path))
 	{
 		string url = RepleaceYouTubeUrl(path);
@@ -703,6 +706,30 @@ bool PlayitemCheck(const string &in path)
 		return !videoId.empty();
 	}
 	return false;
+}
+
+bool isItGoodGameVideo(const string &in path) {
+	if (path.find("://goodgame.ru/video") >= 0) {
+		return true;
+	}
+	if (path.find("://goodgame.ru/clip") >= 0) {
+		return true;
+	}
+	return false;
+}
+
+string getGoodGameVideoUrl(const string &in path) {
+	//Just download source of page and find first mp4 url.
+	//If mp4 is not here, then we have embed youtube video.
+	string fullpage = HostUrlGetString(path, "", "");
+	string mp4 = HostRegExpParse(fullpage, "([-a-zA-Z0-9./_:]+).mp4");
+	if (mp4 == "") {
+		string youtubeEmbed = HostRegExpParse(fullpage, "(youtu[-a-zA-Z0-9./_:]+)");
+		mp4 = "https://" + youtubeEmbed;
+	} else {
+		mp4 += ".mp4";
+	}
+	return mp4;
 }
 
 string TrimFloatString(string str)
@@ -744,11 +771,19 @@ string XMLAttrValue(XMLElement Element, string name)
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList)
 {
-// HostOpenConsole();
+	string fn = path;
 
-	if (PlayitemCheck(path))
+	if (isItGoodGameVideo(fn)) {
+		string ggUrl = getGoodGameVideoUrl(fn);
+		if (ggUrl.find(".mp4") > 0) {
+			return ggUrl;
+		} else {
+			fn = ggUrl;
+		}
+	}
+
+	if (PlayitemCheck(fn))
 	{
-		string fn = path;
 		string tmp_fn = fn;
 		array<youtubeFuncType> JSFuncs;
 		array<int> JSFuncArgs;
