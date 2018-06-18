@@ -87,7 +87,7 @@ bool PlayitemCheck(const string &in path) {
 }
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList) {
-	// HostOpenConsole();
+	HostOpenConsole();
 	// HostPrintUTF8("HEH.");
 
 	//Some vars for quality adding.
@@ -101,11 +101,13 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	HostPrintUTF8(nickname);
 
 	string statusApi = "https://goodgame.ru/api/getchannelstatus?fmt=json&id=" + nickname;
+	HostPrintUTF8(statusApi);
 	string jsonStatus = HostUrlGetString(statusApi, "", "");
 
 	string titleChannel;
 	string channelId;
 	string playerSrc;
+	string isPremium = "";
 
 	//Some tricks to remove useless root node.
 	jsonStatus.replace("}}", "}");
@@ -118,6 +120,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 		titleChannel = ChannelRoot["title"].asString();
 		playerSrc = ChannelRoot["embed"].asString();
+		isPremium = ChannelRoot["premium"].asString();
 		channelId = HostRegExpParse(playerSrc, "player\\?([-a-zA-Z0-9_]+)");
 		
 		HostPrintUTF8(playerSrc);
@@ -135,7 +138,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	//Add 4 + 4 qualitites. 
 	//New API is pretty fast, but for some reasons is laggy.
 	//Old API is pretty slow, but works well. Dunno.
-	if (@QualityList !is null) {
+	if (@QualityList !is null && isPremium == "true") {
 		for (int k = 0; k < 4; k++) {
 			string currentApi = newApi;
 			string currentQuality = qualities[k];
