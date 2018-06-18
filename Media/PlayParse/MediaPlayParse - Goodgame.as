@@ -676,6 +676,8 @@ string SignatureDecode(string url, string signature, string append, string data,
  bool PlayerYouTubeCheck(string url)
 {
 	url.MakeLower();
+	url.replace("#", "!");
+	HostPrintUTF8(url);
 	if (url.find("://goodgame.ru") >= 0) {
 		return true;
 	}
@@ -697,15 +699,19 @@ string SignatureDecode(string url, string signature, string append, string data,
 
 bool PlayitemCheck(const string &in path)
 {
-	if (PlayerYouTubeCheck(path))
-	{
-		string url = RepleaceYouTubeUrl(path);
-		url = MakeYouTubeUrl(url);
-
-		string videoId = HostRegExpParse(url, "v=([-a-zA-Z0-9_]+)");
-		if (videoId.empty()) videoId = HostRegExpParse(url, "video_ids=([-a-zA-Z0-9_]+)");
-		return !videoId.empty();
+	HostPrintUTF8("TAKS!");
+	if (path.find("://goodgame.ru") >= 0) {
+		return true;
 	}
+	// if (PlayerYouTubeCheck(path))
+	// {
+	// 	string url = RepleaceYouTubeUrl(path);
+	// 	url = MakeYouTubeUrl(url);
+
+	// 	string videoId = HostRegExpParse(url, "v=([-a-zA-Z0-9_]+)");
+	// 	if (videoId.empty()) videoId = HostRegExpParse(url, "video_ids=([-a-zA-Z0-9_]+)");
+	// 	return !videoId.empty();
+	// }
 	return false;
 }
 
@@ -753,6 +759,7 @@ HostPrintUTF8("HEH.");
 string header = "Client-ID: 1dviqtp3q3aq68tyvj116mezs3zfdml";
 
 string nickname = HostRegExpParse(path, "https://goodgame.ru/channel/([-a-zA-Z0-9_]+)");
+HostPrintUTF8(nickname);
 
 string statusApi = "https://goodgame.ru/api/getchannelstatus?fmt=json&id=" + nickname;
 
@@ -788,6 +795,17 @@ string m3u8Api = "http://hls.goodgame.ru/hls/" + channelId + ".m3u8";
 // string m3u8Api = "https://cdnnow.goodgame.ru/hls/" + channelId + "_720.m3u8";
 HostPrintUTF8(m3u8Api);
 MetaData["title"] = titleChannel;
+
+QualityListItem itemm;
+// itemm.url = "http://hls.goodgame.ru/hls/" + channelId + "_720.m3u8";
+// itemm.quality = 1080;
+itemm.itag = 22;
+
+array<dictionary> Hheh;
+
+if (@QualityList !is null) AppendQualityList(QualityList, itemm, m3u8Api);
+if (@QualityList is null) AppendQualityList(Hheh, itemm, m3u8Api);
+
 return m3u8Api;
 // &sig={token_sig}&token={token}
 
@@ -817,6 +835,7 @@ return m3u8Api;
 
 	if (PlayitemCheck(path))
 	{
+		HostPrintUTF8("TAKS2!");
 		string fn = path;
 		string tmp_fn = fn;
 		array<youtubeFuncType> JSFuncs;
