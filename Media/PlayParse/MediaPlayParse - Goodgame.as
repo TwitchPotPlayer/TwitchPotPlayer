@@ -790,20 +790,53 @@ if (ChannelReader.parse(jsonStatus, ChannelRoot) && ChannelRoot.isObject()) {
 
 HostPrintUTF8(titleChannel);
 HostPrintUTF8(jsonStatus);
-string m3u8Api = "http://hls.goodgame.ru/hls/" + channelId + ".m3u8";
-// string m3u8Api = "https://cdnnow.goodgame.ru/hls/" + channelId + "_720.m3u8";
+// string m3u8Api = "http://hls.goodgame.ru/hls/" + channelId + ".m3u8";
+string m3u8Api = "https://cdnnow.goodgame.ru/hls/" + channelId + ".m3u8";
 HostPrintUTF8(m3u8Api);
 MetaData["title"] = titleChannel;
 
 QualityListItem itemm;
+// string url;
+// 	string quality;
+// 	string qualityDetail;
+// 	string resolution;
+// 	string bitrate;
+// 	string format;
 // itemm.url = "http://hls.goodgame.ru/hls/" + channelId + "_720.m3u8";
+// https://cdnnow.goodgame.ru/hls/6968_720.m3u8
 // itemm.quality = 1080;
 itemm.itag = 22;
+itemm.url = m3u8Api;
+itemm.quality = "720p";
+itemm.qualityDetail = "HD";
+itemm.resolution = "1280x720";
+itemm.bitrate = "3000";
+itemm.format = "mp4";
+
+QualityListItem itemm2;
+itemm2.itag = 18;
+// itemm2.url = "https://cdnnow.goodgame.ru/hls/1053_480.m3u8";
+itemm2.url = "http://hls.goodgame.ru/hls/" + channelId + "_480.m3u8";
+// itemm2.url = "https://cdnnow.goodgame.ru/hls/" + channelId + "_480.m3u8";
+itemm2.quality = "1080p";
+itemm2.qualityDetail = "HehHD";
+itemm2.resolution = "11280x720";
+itemm2.bitrate = "2000";
+itemm2.format = "mp4";
+
 
 array<dictionary> Hheh;
 
-if (@QualityList !is null) AppendQualityList(QualityList, itemm, m3u8Api);
-if (@QualityList is null) AppendQualityList(Hheh, itemm, m3u8Api);
+if (@QualityList !is null) {
+	HostPrintUTF8("TEST1");
+	AppendQualityList(QualityList, itemm, m3u8Api);
+	AppendQualityList(QualityList, itemm2, itemm2.url);
+}
+if (@QualityList is null) {
+	// array<dictionary> QualityList = Hheh;
+	HostPrintUTF8("TEST2");
+	AppendQualityList(Hheh, itemm, m3u8Api);
+}
 
 return m3u8Api;
 // &sig={token_sig}&token={token}
@@ -831,11 +864,11 @@ return m3u8Api;
 // HostPrintUTF8(firstUrl);
 
 // return firstUrl;
-
+string path2 = "http://www.youtube.com/watch?v=VwgsX5KZRoQ";
 	if (PlayitemCheck(path))
 	{
 		HostPrintUTF8("TAKS2!");
-		string fn = path;
+		string fn = path2;
 		string tmp_fn = fn;
 		array<youtubeFuncType> JSFuncs;
 		array<int> JSFuncArgs;
@@ -1319,8 +1352,11 @@ return m3u8Api;
 					if (videoId == "jj9RZODDDZs" && url.find("clen=") < 0) continue; // 특수한 경우 ㄷㄷㄷ
 					if (itag > 0)
 					{
-						if (@QualityList !is null) AppendQualityList(QualityList, item, url);
-						if (SelectBestProfile(final_itag, final_ext, itag, youtubeSets)) final_url = url;
+						if (i == -1) {
+							// if (@QualityList !is null) AppendQualityList(QualityList, item, url);
+							// HostPrintUTF8(QualityList.length() + "SIZE PLS");
+						}
+						// if (SelectBestProfile(final_itag, final_ext, itag, youtubeSets)) final_url = url;
 					}
 				}
 
@@ -1413,7 +1449,7 @@ return m3u8Api;
 
 															item.bitrate = GetBitrateString(bit);
 														}
-														if (@QualityList !is null) AppendQualityList(QualityList, item, url);
+														// if (@QualityList !is null) AppendQualityList(QualityList, item, url);
 														if (SelectBestProfile(final_itag, final_ext, itag, youtubeSets)) final_url = url;
 													}
 												}
@@ -1531,11 +1567,11 @@ return m3u8Api;
 				}
 
 				if (@MetaData !is null) MetaData["fileExt"] = final_ext;
-				return final_url;
+				return m3u8Api;
 			}
 		}
 	}	
-	return "";
+	return m3u8Api;
 }
 
 bool PlaylistCheck(const string &in path)
