@@ -756,14 +756,13 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 {
 HostOpenConsole();
 HostPrintUTF8("HEH.");
-string header = "Client-ID: 1dviqtp3q3aq68tyvj116mezs3zfdml";
 
 string nickname = HostRegExpParse(path, "https://goodgame.ru/channel/([-a-zA-Z0-9_]+)");
 HostPrintUTF8(nickname);
 
 string statusApi = "https://goodgame.ru/api/getchannelstatus?fmt=json&id=" + nickname;
 
-string jsonStatus = HostUrlGetString(statusApi, "", header);
+string jsonStatus = HostUrlGetString(statusApi, "", "");
 
 string titleChannel;
 string channelId;
