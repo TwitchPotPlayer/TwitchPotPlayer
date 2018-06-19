@@ -87,7 +87,7 @@ bool PlayitemCheck(const string &in path) {
 }
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList) {
-	HostOpenConsole();
+	// HostOpenConsole();
 	// HostPrintUTF8("HEH.");
 
 	//Some vars for quality adding.
