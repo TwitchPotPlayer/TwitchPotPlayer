@@ -34,7 +34,7 @@ array<dictionary> GetCategorys()
 	array<dictionary> ret;
 	
 	dictionary item1;
-	item1["title"] = "{$CP949=가장 인기 많은 영상$}{$CP0=Most/Twitch$}{$CP950=觀看次數最多/最少$}";
+	item1["title"] = "{$CP949=가장 인기 많은 영상$}{$CP0=Your Follows$}{$CP950=觀看次數最多/最少$}";
 	item1["Category"] = "most";
 	ret.insertLast(item1);
 	
@@ -49,6 +49,7 @@ array<dictionary> GetCategorys()
 
 array<dictionary> GetUrlList(string Category, string Genre, string PathToken, string Query, string PageToken)
 {
+	string loginFromFile = HostFileRead(HostFileOpen("Extention\\Media\\PlayParse\\TwitchLogin.txt"), 500);
 	array<dictionary> ret;
 	string api;
 	
@@ -65,12 +66,11 @@ array<dictionary> GetUrlList(string Category, string Genre, string PathToken, st
 		PageToken = "";
 	}	
 
-	// api = "https://api.twitch.tv/helix/users?login=zik_&login=lirik";
 	string getNameOfID = "https://api.twitch.tv/helix/users?";
-	string idOfChannel = "23161357";
+	string idOfChannel = "";
 	string header = "Client-ID: 1dviqtp3q3aq68tyvj116mezs3zfdml";
 
-	string jsonOfYou = HostUrlGetString(getNameOfID + "login=zik_", "", header);
+	string jsonOfYou = HostUrlGetString(getNameOfID + "login=" + loginFromFile, "", header);
 	// HostPrintUTF8(jsonOfUser);
 
 	JsonReader TwitchYouReader;
@@ -81,7 +81,7 @@ array<dictionary> GetUrlList(string Category, string Genre, string PathToken, st
 	}
 
 	
-	api = "https://api.twitch.tv/helix/users/follows?from_id=" + idOfChannel;
+	api = "https://api.twitch.tv/helix/users/follows?first=100&from_id=" + idOfChannel;
 	
 	HostOpenConsole();
 
@@ -90,6 +90,9 @@ array<dictionary> GetUrlList(string Category, string Genre, string PathToken, st
 
 	JsonReader TwitchReader;
 	JsonValue TwitchRoot;
+
+	string allFollowersNick = "";
+
 
 	if (TwitchReader.parse(json, TwitchRoot) && TwitchRoot.isObject()) {
 		JsonValue items = TwitchRoot["data"];
@@ -125,11 +128,42 @@ array<dictionary> GetUrlList(string Category, string Genre, string PathToken, st
 				if (itemsName.isArray()) {
 					for (int k = 0, lenNames = itemsName.size(); k < lenNames; k++) {
 						string login = itemsName[k]["login"].asString();
+						// HostPrintUTF8(login);
+
+						allFollowersNick += login + ",";
+
+						// dictionary heh;
+						// heh["url"] = "https://twitch.tv/" + login;
+						// heh["title"] = login;
+						// ret.insertLast(heh);
+					}
+				}
+			}
+
+			string jsonOfUserOnline = HostUrlGetString("https://api.twitch.tv/kraken/streams?channel=" + allFollowersNick, "", header);
+			// HostPrintUTF8(jsonOfUser);
+
+			JsonReader TwitchOnlineReader;
+			JsonValue TwitchOnlineRoot;
+
+			if (TwitchOnlineReader.parse(jsonOfUserOnline, TwitchOnlineRoot) && TwitchOnlineRoot.isObject()) {
+				JsonValue itemsName = TwitchOnlineRoot["streams"];
+				// HostPrintUTF8(itemsName.asString());
+				if (itemsName.isArray()) {
+					for (int k = 0, lenNames = itemsName.size(); k < lenNames; k++) {
+						bool isPlaylist = itemsName[k]["is_playlist"].asBool();
+						string display_name = itemsName[k]["channel"]["display_name"].asString();
+						string login = itemsName[k]["channel"]["name"].asString();
+						string title = itemsName[k]["channel"]["status"].asString();
 						HostPrintUTF8(login);
+
+						if (isPlaylist) {
+							title += "[VOD] ";
+						}
 
 						dictionary heh;
 						heh["url"] = "https://twitch.tv/" + login;
-						heh["title"] = login;
+						heh["title"] = title;
 						ret.insertLast(heh);
 					}
 				}
