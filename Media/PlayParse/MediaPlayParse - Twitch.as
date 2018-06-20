@@ -757,6 +757,17 @@ string m3u8Api = "https://usher.ttvnw.net/api/channel/hls/" + nickname + ".m3u8?
 // &sig={token_sig}&token={token}
 string jsonToken = HostUrlGetString(tokenApi, "", header);
 
+// string idChannel = HostRegExpParse(jsonToken, ":([0-9]+)");
+string jsonTokenVideos = HostUrlGetString("https://api.twitch.tv/kraken/channels/" + nickname, "", header);
+string titleStream;
+string game;
+JsonReader StatusChannelReader;
+JsonValue StatusChannelRoot;
+if (StatusChannelReader.parse(jsonTokenVideos, StatusChannelRoot) && StatusChannelRoot.isObject()) {
+	titleStream = StatusChannelRoot["status"].asString();
+	game = StatusChannelRoot["game"].asString();
+}
+
 string sig;
 string token;
 
@@ -814,7 +825,7 @@ if (@QualityList !is null) {
 }
 
 
-MetaData["title"] = "Test Title";
+MetaData["title"] = titleStream;
 return firstUrl;
 
 	if (PlayitemCheck(path))
