@@ -761,12 +761,15 @@ string jsonToken = HostUrlGetString(tokenApi, "", header);
 string jsonTokenVideos = HostUrlGetString("https://api.twitch.tv/kraken/channels/" + nickname, "", header);
 string titleStream;
 string game;
+string display_name;
 JsonReader StatusChannelReader;
 JsonValue StatusChannelRoot;
 if (StatusChannelReader.parse(jsonTokenVideos, StatusChannelRoot) && StatusChannelRoot.isObject()) {
 	titleStream = StatusChannelRoot["status"].asString();
 	game = StatusChannelRoot["game"].asString();
+	display_name = StatusChannelRoot["display_name"].asString();
 }
+HostPrintUTF8(jsonTokenVideos);
 
 string sig;
 string token;
@@ -826,6 +829,7 @@ if (@QualityList !is null) {
 
 
 MetaData["title"] = titleStream;
+MetaData["content"] = titleStream + " | " + game + " | " + display_name;
 return firstUrl;
 
 	if (PlayitemCheck(path))
