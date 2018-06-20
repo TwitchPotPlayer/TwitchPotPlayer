@@ -81,23 +81,96 @@ void Reverse(string &a) {
 
 bool PlayitemCheck(const string &in path) {
 	HostPrintUTF8(path);
+	HostPrintUTF8("TAKSSSS");
 	if (path.find("://twitch.tv") >= 0) {
 		return true;
 	}
 	if (path.find("://www.twitch.tv") >= 0) {
 		return true;
 	}
+	if (path.find("://clips.twitch.tv") >= 0) {
+		return true;
+	}
 	return false;
 }
 
+string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList, const string &in headerClientId) {
+	string clipId = HostRegExpParse(path, "clips.twitch.tv/([-a-zA-Z0-9_]+)");
+	string clipApi = "https://clips.twitch.tv/api/v2/clips/" + clipId + "/status";
+	string clipStatusApi = "https://api.twitch.tv/kraken/clips/" + clipId;
+
+	string jsonClip = HostUrlGetString(clipApi, "", "");
+	string jsonStatusClip = HostUrlGetString(clipStatusApi, "", headerClientId + "\naccept: application/vnd.twitchtv.v5+json");
+
+	HostPrintUTF8(jsonStatusClip);
+	JsonReader ClipReader;
+	JsonValue ClipRoot;
+
+	string srcBestUrl = "";
+	if (ClipReader.parse(jsonClip, ClipRoot) && ClipRoot.isObject()) {
+		JsonValue qualityArray;
+		if (ClipRoot["quality_options"].isArray()) {
+			qualityArray = ClipRoot["quality_options"];
+		} else {
+			return "";
+		}
+
+		srcBestUrl = qualityArray[0]["source"].asString();
+
+		if (@QualityList !is null) {
+			for (int k = 0; k < qualityArray.size(); k++) {
+				string currentQualityUrl = qualityArray[k]["source"].asString();
+				string qualityName = qualityArray[k]["quality"].asString() + "p";
+
+				QualityListItem qualityItem;
+				qualityItem.itag = k;
+				qualityItem.quality = qualityName;
+				qualityItem.qualityDetail = qualityName;
+				qualityItem.url = currentQualityUrl;
+				QualityList.insertLast(qualityItem.toDictionary());
+			}
+		}
+	}
+
+	string titleClip;
+	string game;
+	string display_name;
+	string views;
+	string created_at;
+	JsonReader StatusClipReader;
+	JsonValue StatusClipRoot;
+	if (StatusClipReader.parse(jsonStatusClip, StatusClipRoot) && StatusClipRoot.isObject()) {
+		titleClip = StatusClipRoot["title"].asString();
+		game = StatusClipRoot["game"].asString();
+		views = "Views: " + StatusClipRoot["views"].asString();
+		created_at = HostRegExpParse(StatusClipRoot["created_at"].asString(), "([0-9-]+)T");
+		display_name = StatusClipRoot["broadcaster"]["display_name"].asString();
+	}
+
+	MetaData["title"] = titleClip;
+	MetaData["content"] = titleClip + " | " + game + " | " + display_name + " | " + views + " | " + created_at;
+
+	return srcBestUrl;
+}
+
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList) {
+
+	// Any twitch API demands client id in header.
+	string headerClientId = "Client-ID: 1dviqtp3q3aq68tyvj116mezs3zfdml";
 	HostOpenConsole();
+
 	bool isVod = false;
+	bool isClip = false;
 	if (path.find("twitch.tv/videos/") > 0) {
 		isVod = true;
 	}
-	// Any twitch API demands client id in header.
-	string headerClientId = "Client-ID: 1dviqtp3q3aq68tyvj116mezs3zfdml";
+	string clipId = HostRegExpParse(path, "clips.twitch.tv/([-a-zA-Z0-9_]+)");
+	HostPrintUTF8(clipId);
+	if (path.find("clips.twitch.tv") >= 0) {
+		return ClipsParse(path, MetaData, QualityList, headerClientId);
+	}
+	
+
 	string nickname = HostRegExpParse(path, "https://twitch.tv/([-a-zA-Z0-9_]+)");
 	string vodId = "";
 	if (isVod) {
@@ -146,7 +219,6 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 			display_name = StatusChannelRoot["channel"]["display_name"].asString();
 		}
 	}
-	HostPrintUTF8(game);
 
 	// Read weird token and sig.
 	string sig;
