@@ -80,39 +80,73 @@ void Reverse(string &a) {
 }
 
 bool PlayitemCheck(const string &in path) {
+	HostPrintUTF8(path);
 	if (path.find("://twitch.tv") >= 0) {
+		return true;
+	}
+	if (path.find("://www.twitch.tv") >= 0) {
 		return true;
 	}
 	return false;
 }
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList) {
-	// HostOpenConsole();
-	
+	HostOpenConsole();
+	bool isVod = false;
+	if (path.find("twitch.tv/videos/") > 0) {
+		isVod = true;
+	}
 	// Any twitch API demands client id in header.
 	string headerClientId = "Client-ID: 1dviqtp3q3aq68tyvj116mezs3zfdml";
 	string nickname = HostRegExpParse(path, "https://twitch.tv/([-a-zA-Z0-9_]+)");
+	string vodId = "";
+	if (isVod) {
+		vodId = HostRegExpParse(path, "twitch.tv/videos/([0-9]+)");
+	}
+	HostPrintUTF8(vodId);
+// 	https://usher.ttvnw.net/vod/
+//  https://api.twitch.tv/api/vods/
 
 	// Firstly we need to request for api to get pretty weirdly token and sig.
 	string tokenApi = "https://api.twitch.tv/api/channels/" + nickname + "/access_token?need_https=true";
+	if (isVod) {
+		tokenApi = "https://api.twitch.tv/api/vods/" + vodId + "/access_token?need_https=true";
+	}
 	// Parameter p should be random number.
 	string m3u8Api = "https://usher.ttvnw.net/api/channel/hls/" + nickname + ".m3u8?allow_source=true&p=7278365player_backend=mediaplayer&playlist_include_framerate=true&allow_audio_only=true";
+	if (isVod) {
+		m3u8Api = "https://usher.ttvnw.net/vod/" + vodId + ".m3u8?allow_source=true&p=7278365player_backend=mediaplayer&playlist_include_framerate=true&allow_audio_only=true";
+	}
 	// &sig={token_sig}&token={token}
 	string jsonToken = HostUrlGetString(tokenApi, "", headerClientId);
 
 	// Get information of current stream.
 	// string idChannel = HostRegExpParse(jsonToken, ":([0-9]+)");
-	string jsonChannelStatus = HostUrlGetString("https://api.twitch.tv/kraken/channels/" + nickname, "", headerClientId);
+	string jsonChannelStatus = "";
+	if (!isVod) {
+		jsonChannelStatus = HostUrlGetString("https://api.twitch.tv/kraken/channels/" + nickname, "", headerClientId);
+	} else {
+		jsonChannelStatus = HostUrlGetString("https://api.twitch.tv/kraken/videos/v" + vodId, "", headerClientId);
+	}
 	string titleStream;
 	string game;
 	string display_name;
 	JsonReader StatusChannelReader;
 	JsonValue StatusChannelRoot;
 	if (StatusChannelReader.parse(jsonChannelStatus, StatusChannelRoot) && StatusChannelRoot.isObject()) {
-		titleStream = StatusChannelRoot["status"].asString();
+		if (!isVod) {
+			titleStream = StatusChannelRoot["status"].asString();
+		} else {
+			titleStream = StatusChannelRoot["title"].asString();
+		}
 		game = StatusChannelRoot["game"].asString();
-		display_name = StatusChannelRoot["display_name"].asString();
+		if (!isVod) {
+			display_name = StatusChannelRoot["display_name"].asString();
+		} else {
+			display_name = StatusChannelRoot["channel"]["display_name"].asString();
+		}
 	}
+	HostPrintUTF8(game);
 
 	// Read weird token and sig.
 	string sig;
