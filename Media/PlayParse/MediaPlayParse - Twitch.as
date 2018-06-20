@@ -675,7 +675,9 @@ string SignatureDecode(string url, string signature, string append, string data,
 
  bool PlayerYouTubeCheck(string url)
 {
-	return true;
+	if (url.find("://twitch.tv") >= 0) {
+		return true;
+	}
 	url.MakeLower();
 	if (url.find(YOUTUBE_MP_URL) >= 0 && (url.find("watch?") < 0 || url.find("playlist?") >= 0 || url.find("&list=") >= 0))
 	{
@@ -748,9 +750,10 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 HostOpenConsole();
 HostPrintUTF8("HEH.");
 string header = "Client-ID: 1dviqtp3q3aq68tyvj116mezs3zfdml";
+string nickname = HostRegExpParse(path, "https://twitch.tv/([-a-zA-Z0-9_]+)");
 
-string tokenApi = "https://api.twitch.tv/api/channels/nickname/access_token?need_https=true";
-string m3u8Api = "https://usher.ttvnw.net/api/channel/hls/nickname.m3u8?allow_source=true&p=7212365player_backend=mediaplayer&playlist_include_framerate=true&allow_audio_only=true";
+string tokenApi = "https://api.twitch.tv/api/channels/" + nickname + "/access_token?need_https=true";
+string m3u8Api = "https://usher.ttvnw.net/api/channel/hls/" + nickname + ".m3u8?allow_source=true&p=7278365player_backend=mediaplayer&playlist_include_framerate=true&allow_audio_only=true";
 // &sig={token_sig}&token={token}
 string jsonToken = HostUrlGetString(tokenApi, "", header);
 
@@ -767,6 +770,7 @@ if (TokenReader.parse(jsonToken, TokenRoot) && TokenRoot.isObject()) {
 HostPrintUTF8(jsonToken);
 
 string jsonM3u8 = HostUrlGetString(m3u8Api + sig + token, "", header);
+jsonM3u8.replace('"', "");
 HostPrintUTF8(jsonM3u8);	
 
 
@@ -774,9 +778,40 @@ string m3 = ".m3u8";
 int firstIndex1 = jsonM3u8.find("https://");
 int firstIndex2 = jsonM3u8.find(m3);
 
-string firstUrl = jsonM3u8.substr(firstIndex1, firstIndex2 - firstIndex1 + 5);
+string nname = HostRegExpParse(jsonM3u8, "NAME=([a-zA-Z-_.0-9/ ()]+)");
+HostPrintUTF8(nname + " THIS IS NAME!");
+
+string firstUrl = "https://" + HostRegExpParse(jsonM3u8, "https://([a-zA-Z-_.0-9/]+)" + m3) + m3;
+// string firstUrl = jsonM3u8.substr(firstIndex1, firstIndex2 - firstIndex1 + 5);
 HostPrintUTF8("TAKS.");
 HostPrintUTF8(firstUrl);
+
+// jsonM3u8.replace(firstUrl, "");
+// string secondUrl = "https://" + HostRegExpParse(jsonM3u8, "https://([a-zA-Z-_.0-9/]+)" + m3) + m3;
+// HostPrintUTF8(secondUrl);
+
+
+if (@QualityList !is null) {
+	// Let's say there are max 20 qualities in total. If there are fewer of them, then just interrupt the cycle.
+	for (int k = 0; k < 20; k++) {
+		string currentQuality = HostRegExpParse(jsonM3u8, "NAME=([a-zA-Z-_.0-9/ ()]+)");
+		string currentQualityUrl = "https://" + HostRegExpParse(jsonM3u8, "https://([a-zA-Z-_.0-9/]+)" + m3) + m3;
+
+		if (currentQuality == "") {
+			break;
+		}
+
+		jsonM3u8.replace(currentQualityUrl, "");
+		jsonM3u8.replace("NAME=" + currentQuality, "");
+
+		QualityListItem qualityItem;
+		qualityItem.itag = k;
+		qualityItem.quality = currentQuality;
+		qualityItem.qualityDetail = currentQuality;
+		qualityItem.url = currentQualityUrl;
+		QualityList.insertLast(qualityItem.toDictionary());
+	}
+}
 
 
 MetaData["title"] = "Test Title";
