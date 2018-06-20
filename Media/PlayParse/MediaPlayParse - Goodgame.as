@@ -56,29 +56,6 @@ class QualityListItem {
 	}	
 };
 
-void Delete(string &a, int b) {
-	a.erase(0, b);
-}
-
-void Swap(string &a, int b) {
-	uint8 c = a[0];
-
-	b %= a.size();
-	a[0] = a[b];
-	a[b] = c;
-};
-
-void Reverse(string &a) {
-	int len = a.size();
-
-	for (int i = 0; i < len / 2; ++i) {
-		uint8 c = a[i];
-		
-		a[i] = a[len - i - 1];
-		a[len - i - 1] = c;
-	}
-}
-
 bool PlayitemCheck(const string &in path) {
 	if (path.find("://goodgame.ru/channel") >= 0) {
 		return true;
@@ -88,7 +65,6 @@ bool PlayitemCheck(const string &in path) {
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList) {
 	// HostOpenConsole();
-	// HostPrintUTF8("HEH.");
 
 	//Some vars for quality adding.
 	array<string> qualities = {"", "_720", "_480", "_240"};
@@ -161,19 +137,4 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	}
 
 	return m3u8Api;
-}
-
-string FixHtmlSymbols(string inStr) {
-	inStr.replace("&quot;", "\"");
-	inStr.replace("&amp;", "&");
-	inStr.replace("&#39;", "'");
-	inStr.replace("&#039;", "'");
-	inStr.replace("\\n", "\r\n");
-	inStr.replace("\n", "\r\n");
-	inStr.replace("\\", "");
-
-	inStr.replace(" - YouTube", "");
-	inStr.replace(" on Vimeo", "");
-
-	return inStr;
 }

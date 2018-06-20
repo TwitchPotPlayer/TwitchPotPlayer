@@ -56,32 +56,7 @@ class QualityListItem {
 	}	
 };
 
-void Delete(string &a, int b) {
-	a.erase(0, b);
-}
-
-void Swap(string &a, int b) {
-	uint8 c = a[0];
-
-	b %= a.size();
-	a[0] = a[b];
-	a[b] = c;
-};
-
-void Reverse(string &a) {
-	int len = a.size();
-
-	for (int i = 0; i < len / 2; ++i) {
-		uint8 c = a[i];
-		
-		a[i] = a[len - i - 1];
-		a[len - i - 1] = c;
-	}
-}
-
 bool PlayitemCheck(const string &in path) {
-	HostPrintUTF8(path);
-	HostPrintUTF8("TAKSSSS");
 	if (path.find("://twitch.tv") >= 0) {
 		return true;
 	}
@@ -157,7 +132,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 	// Any twitch API demands client id in header.
 	string headerClientId = "Client-ID: 1dviqtp3q3aq68tyvj116mezs3zfdml";
-	HostOpenConsole();
+	// HostOpenConsole();
 
 	bool isVod = false;
 	bool isClip = false;
@@ -266,19 +241,4 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	MetaData["title"] = titleStream;
 	MetaData["content"] = titleStream + " | " + game + " | " + display_name;
 	return sourceQualityUrl;
-}
-
-string FixHtmlSymbols(string inStr) {
-	inStr.replace("&quot;", "\"");
-	inStr.replace("&amp;", "&");
-	inStr.replace("&#39;", "'");
-	inStr.replace("&#039;", "'");
-	inStr.replace("\\n", "\r\n");
-	inStr.replace("\n", "\r\n");
-	inStr.replace("\\", "");
-
-	inStr.replace(" - YouTube", "");
-	inStr.replace(" on Vimeo", "");
-
-	return inStr;
 }
