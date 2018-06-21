@@ -1,5 +1,5 @@
 ﻿/*
-	YouTube media parse
+	GoodGame Videos media parse
 */	
 
 //	string GetTitle() 									-> get title for UI
@@ -17,7 +17,7 @@
 
 string GetTitle()
 {
-	return "YouTube";
+	return "GoodGame Videos";
 }
 
 string GetVersion()
@@ -27,7 +27,7 @@ string GetVersion()
 
 string GetDesc()
 {
-	return "https://www.youtube.com/";
+	return "https://goodgame.ru/";
 }
 
 string YOUTUBE_MP_URL	="://www.youtube.com/";
