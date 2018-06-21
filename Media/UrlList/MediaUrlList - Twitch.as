@@ -42,7 +42,7 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersNick, string header) 
 
 	// HostPrintUTF8(jsonOfYou);
 	// HostPrintUTF8(jsonOfNicknames);
-	HostPrintUTF8(jsonOfUserOnline);
+	// HostPrintUTF8(jsonOfUserOnline);
 
 	// Read json of online channels.
 	JsonReader TwitchOnlineReader;
@@ -57,7 +57,7 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersNick, string header) 
 				string display_name = itemsName[k]["channel"]["display_name"].asString();
 				string login = itemsName[k]["channel"]["name"].asString();
 				string title = itemsName[k]["channel"]["status"].asString();
-				HostPrintUTF8(login);
+				// HostPrintUTF8(login);
 
 				//If channel plays VOD add that string.
 				if (isPlaylist != "live") {
@@ -78,7 +78,7 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersNick, string header) 
 }
 
 array<dictionary> GetUrlList(string Category, string Genre, string PathToken, string Query, string PageToken) {
-	HostOpenConsole();
+	// HostOpenConsole();
 	string loginFromFile = HostFileRead(HostFileOpen("Extention\\Media\\UrlList\\TwitchLogin.txt"), 500);
 	array<dictionary> ret;
 	string api;
