@@ -52,7 +52,7 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersNick, string header) 
 		if (itemsName.isArray()) {
 			//Set every online channel in list of urls.
 			for (int k = 0, lenNames = itemsName.size(); k < lenNames; k++) {
-				bool isPlaylist = itemsName[k]["is_playlist"].asBool();
+				string isPlaylist = itemsName[k]["stream_type"].asString();
 				string viewers = itemsName[k]["viewers"].asString();
 				string display_name = itemsName[k]["channel"]["display_name"].asString();
 				string login = itemsName[k]["channel"]["name"].asString();
@@ -60,7 +60,7 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersNick, string header) 
 				HostPrintUTF8(login);
 
 				//If channel plays VOD add that string.
-				if (isPlaylist) {
+				if (isPlaylist != "live") {
 					title = "[VOD] " + title;
 				}
 
