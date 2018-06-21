@@ -35,8 +35,50 @@ array<dictionary> GetCategorys() {
 	return ret;
 }
 
+array<dictionary> GetChunkOfUsersOnline(string allFollowersNick, string header) {
+	array<dictionary> ret;
+	// Get channels which is online right now.
+	string jsonOfUserOnline = HostUrlGetString("https://api.twitch.tv/kraken/streams?channel=" + allFollowersNick, "", header);
+
+	// HostPrintUTF8(jsonOfYou);
+	// HostPrintUTF8(jsonOfNicknames);
+	HostPrintUTF8(jsonOfUserOnline);
+
+	// Read json of online channels.
+	JsonReader TwitchOnlineReader;
+	JsonValue TwitchOnlineRoot;
+	if (TwitchOnlineReader.parse(jsonOfUserOnline, TwitchOnlineRoot) && TwitchOnlineRoot.isObject()) {
+		JsonValue itemsName = TwitchOnlineRoot["streams"];
+		if (itemsName.isArray()) {
+			//Set every online channel in list of urls.
+			for (int k = 0, lenNames = itemsName.size(); k < lenNames; k++) {
+				bool isPlaylist = itemsName[k]["is_playlist"].asBool();
+				string viewers = itemsName[k]["viewers"].asString();
+				string display_name = itemsName[k]["channel"]["display_name"].asString();
+				string login = itemsName[k]["channel"]["name"].asString();
+				string title = itemsName[k]["channel"]["status"].asString();
+				HostPrintUTF8(login);
+
+				//If channel plays VOD add that string.
+				if (isPlaylist) {
+					title = "[VOD] " + title;
+				}
+
+				title += " (" + viewers + ")";
+
+				dictionary objectOfChannel;
+				objectOfChannel["url"] = "https://twitch.tv/" + login;
+				objectOfChannel["title"] = title;
+				ret.insertLast(objectOfChannel);
+			}
+		}
+	}
+
+	return ret;
+}
+
 array<dictionary> GetUrlList(string Category, string Genre, string PathToken, string Query, string PageToken) {
-	// HostOpenConsole();
+	HostOpenConsole();
 	string loginFromFile = HostFileRead(HostFileOpen("Extention\\Media\\UrlList\\TwitchLogin.txt"), 500);
 	array<dictionary> ret;
 	string api;
@@ -86,42 +128,16 @@ array<dictionary> GetUrlList(string Category, string Genre, string PathToken, st
 					for (int k = 0, lenNames = itemsName.size(); k < lenNames; k++) {
 						string login = itemsName[k]["login"].asString();
 						allFollowersNick += login + ",";
-					}
-				}
-			}
-
-			// Get channels which is online right now.
-			string jsonOfUserOnline = HostUrlGetString("https://api.twitch.tv/kraken/streams?channel=" + allFollowersNick, "", header);
-
-			// Read json of online channels.
-			JsonReader TwitchOnlineReader;
-			JsonValue TwitchOnlineRoot;
-			if (TwitchOnlineReader.parse(jsonOfUserOnline, TwitchOnlineRoot) && TwitchOnlineRoot.isObject()) {
-				JsonValue itemsName = TwitchOnlineRoot["streams"];
-				if (itemsName.isArray()) {
-					//Set every online channel in list of urls.
-					for (int k = 0, lenNames = itemsName.size(); k < lenNames; k++) {
-						bool isPlaylist = itemsName[k]["is_playlist"].asBool();
-						string viewers = itemsName[k]["viewers"].asString();
-						string display_name = itemsName[k]["channel"]["display_name"].asString();
-						string login = itemsName[k]["channel"]["name"].asString();
-						string title = itemsName[k]["channel"]["status"].asString();
-						HostPrintUTF8(login);
-
-						//If channel plays VOD add that string.
-						if (isPlaylist) {
-							title = "[VOD] " + title;
+						// Divide every request by 25 usernames.
+						if (k % 25 == 0 || k == lenNames - 1) {
+							ret.insertAt(0, GetChunkOfUsersOnline(allFollowersNick, header));
+							allFollowersNick = "";
 						}
-
-						title += " (" + viewers + ")";
-
-						dictionary objectOfChannel;
-						objectOfChannel["url"] = "https://twitch.tv/" + login;
-						objectOfChannel["title"] = title;
-						ret.insertLast(objectOfChannel);
 					}
 				}
 			}
+
+			
 		}
 	}
 
