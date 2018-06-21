@@ -239,6 +239,9 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 
 	MetaData["title"] = titleStream;
-	MetaData["content"] = titleStream + " | " + game + " | " + display_name;
+	MetaData["content"] = "— " + titleStream + " | " + game;
+	// MetaData["viewCount"] = "195";
+	MetaData["author"] = display_name;
+	MetaData["chatUrl"] = "https://zik.one/chat/?theme=bttv_dark&channel=" + nickname + "&fade=false&bot_activity=false&prevent_clipping=false";
 	return sourceQualityUrl;
 }
