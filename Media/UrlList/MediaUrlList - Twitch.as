@@ -17,8 +17,30 @@ string GetTitle() {
 	return "{$CP0=Twitch$}";
 }
 
+string GetLoginTitle() {
+	return "Login of Twitch";
+}
+
+string GetLoginDesc() {
+	return "LEAVE PASSWORD FIELD EMPTY.";
+}
+
+string ServerCheck(string User, string Pass) {
+	if (User.length() > 2 && User.find(" ") == -1 && User.find(".") == -1) {
+		HostSaveString("TwitchLogin", User);
+	}
+	return "Test.";
+}
+
+string ServerLogin(string User, string Pass) {
+	if (User.length() > 2 && User.find(" ") == -1 && User.find(".") == -1) {
+		HostSaveString("TwitchLogin", User);
+	} 
+	return "Saved!";
+}
+
 string GetVersion() {
-	return "1";
+	return "1.1";
 }
 
 string GetDesc() {
@@ -39,10 +61,6 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersNick, string header) 
 	array<dictionary> ret;
 	// Get channels which is online right now.
 	string jsonOfUserOnline = HostUrlGetString("https://api.twitch.tv/kraken/streams?channel=" + allFollowersNick, "", header);
-
-	// HostPrintUTF8(jsonOfYou);
-	// HostPrintUTF8(jsonOfNicknames);
-	// HostPrintUTF8(jsonOfUserOnline);
 
 	// Read json of online channels.
 	JsonReader TwitchOnlineReader;
@@ -77,11 +95,28 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersNick, string header) 
 	return ret;
 }
 
+array<dictionary> ShowError() {
+	array<dictionary> ret;
+	dictionary objectOfChannel;
+	objectOfChannel["url"] = "...";
+	objectOfChannel["title"] = "Please go to setting extension";
+	ret.insertLast(objectOfChannel);
+	objectOfChannel["url"] = "...";
+	objectOfChannel["title"] = "and set your Twitch login.";
+	ret.insertLast(objectOfChannel);
+	return ret;
+}
+
 array<dictionary> GetUrlList(string Category, string Genre, string PathToken, string Query, string PageToken) {
 	// HostOpenConsole();
-	string loginFromFile = HostFileRead(HostFileOpen("Extention\\Media\\UrlList\\TwitchLogin.txt"), 500);
+	string loginFromFile = HostLoadString("TwitchLogin");
 	array<dictionary> ret;
 	string api;
+
+	HostPrintUTF8(loginFromFile + "...");
+	if (HostLoadString("TwitchLogin").length() < 3) {
+		return ShowError();
+	}
 	
 	string getNameOfID = "https://api.twitch.tv/helix/users?";
 	string idOfChannel = "";
@@ -92,6 +127,12 @@ array<dictionary> GetUrlList(string Category, string Genre, string PathToken, st
 	JsonReader TwitchYouReader;
 	JsonValue TwitchYouRoot;
 	if (TwitchYouReader.parse(jsonOfYou, TwitchYouRoot) && TwitchYouRoot.isObject()) {
+		if (TwitchYouRoot["status"].asInt() == 400) {
+			return ShowError();
+		}
+		if (TwitchYouRoot["data"].isArray() && TwitchYouRoot["data"].size() == 0) {
+			return ShowError();
+		}
 		idOfChannel = TwitchYouRoot["data"][0]["id"].asString();
 	}
 
