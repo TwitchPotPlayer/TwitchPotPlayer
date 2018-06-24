@@ -72,6 +72,7 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersNick, string header) 
 			for (int k = 0, lenNames = itemsName.size(); k < lenNames; k++) {
 				string isPlaylist = itemsName[k]["stream_type"].asString();
 				string viewers = itemsName[k]["viewers"].asString();
+				string game = itemsName[k]["game"].asString();
 				string display_name = itemsName[k]["channel"]["display_name"].asString();
 				string login = itemsName[k]["channel"]["name"].asString();
 				string title = itemsName[k]["channel"]["status"].asString();
@@ -83,6 +84,8 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersNick, string header) 
 				}
 
 				title += " (" + viewers + ")";
+				title = display_name + " | " + title;
+				title += " | " + game;
 
 				dictionary objectOfChannel;
 				objectOfChannel["url"] = "https://twitch.tv/" + login;
