@@ -109,12 +109,13 @@ array<dictionary> ShowError() {
 
 array<dictionary> GetUrlList(string Category, string Genre, string PathToken, string Query, string PageToken) {
 	// HostOpenConsole();
-	string loginFromFile = HostLoadString("TwitchLogin");
+	// string loginFromFile = HostLoadString("TwitchLogin");
+	string loginFromFile = HostFileRead(HostFileOpen("Extention\\Media\\UrlList\\TwitchLogin.txt"), 500);
 	array<dictionary> ret;
 	string api;
 
 	HostPrintUTF8(loginFromFile + "...");
-	if (HostLoadString("TwitchLogin").length() < 3) {
+	if (loginFromFile.length() < 3) {
 		return ShowError();
 	}
 	
