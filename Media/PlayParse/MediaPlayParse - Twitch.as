@@ -147,6 +147,10 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	
 
 	string nickname = HostRegExpParse(path, "https://twitch.tv/([-a-zA-Z0-9_]+)");
+	if (nickname == "") {
+		nickname = HostRegExpParse(path, "https://www.twitch.tv/([-a-zA-Z0-9_]+)");
+	}
+
 	string vodId = "";
 	if (isVod) {
 		vodId = HostRegExpParse(path, "twitch.tv/videos/([0-9]+)");
