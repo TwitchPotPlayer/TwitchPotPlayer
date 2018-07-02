@@ -146,7 +146,6 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 	// Any twitch API demands client id in header.
 	string headerClientId = "Client-ID: 1dviqtp3q3aq68tyvj116mezs3zfdml";
-	// HostOpenConsole();
 
 	bool isVod = false;
 	bool isClip = false;
@@ -234,17 +233,11 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	string sourceQualityUrl = "https://" + HostRegExpParse(jsonM3u8, "https://([a-zA-Z-_.0-9/]+)" + m3) + m3;
 
 	if (@QualityList !is null) {
-		// Let's say there are max 20 qualities in total. If there are fewer of them, then just interrupt the cycle.
-		for (int k = 0; k < 20; k++) {
-			string currentQuality = HostRegExpParse(jsonM3u8, "NAME=([a-zA-Z-_.0-9/ ()]+)");
-			string currentQualityUrl = "https://" + HostRegExpParse(jsonM3u8, "https://([a-zA-Z-_.0-9/]+)" + m3) + m3;
-
-			if (currentQuality == "") {
-				break;
-			}
-
-			jsonM3u8.replace(currentQualityUrl, "");
-			jsonM3u8.replace("NAME=" + currentQuality, "");
+		array<string> arrayOfM3u8 = jsonM3u8.split("#EXT-X-MEDIA:");
+		for (int k = 1, len = arrayOfM3u8.size(); k < len; k++) {
+			string currentM3u8 = arrayOfM3u8[k];
+			string currentQuality = HostRegExpParse(currentM3u8, "NAME=([a-zA-Z-_.0-9/ ()]+)");
+			string currentQualityUrl = "https://" + HostRegExpParse(currentM3u8, "https://([a-zA-Z-_.0-9/]+)" + m3) + m3;
 
 			QualityListItem qualityItem;
 			qualityItem.itag = GetITag(currentQuality);
@@ -258,6 +251,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 	MetaData["title"] = titleStream;
 	MetaData["content"] = "— " + titleStream + " | " + game;
+	// TODO check every N seconds viewers.
 	// MetaData["viewCount"] = "195";
 	MetaData["author"] = display_name;
 	MetaData["chatUrl"] = "https://zik.one/chat/?theme=bttv_dark&channel=" + nickname + "&fade=false&bot_activity=false&prevent_clipping=false";
