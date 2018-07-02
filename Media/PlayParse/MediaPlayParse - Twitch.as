@@ -56,6 +56,20 @@ class QualityListItem {
 	}	
 };
 
+int GetITag(const string &in qualityName) {
+	array<string> qualities = {"audio_only", "160p", "360p", "480p", "720p", "720p60", "1080p", "1080p60"};
+	qualities.reverse();
+	if (qualityName.find("(source)") > 0) {
+		return 1;
+	}
+	int indexQuality = qualities.find(qualityName);
+	if (indexQuality > 0) {
+		return indexQuality + 2;
+	} else {
+		return -1;
+	}
+}
+
 bool PlayitemCheck(const string &in path) {
 	if (path.find("://twitch.tv") >= 0) {
 		return true;
@@ -233,7 +247,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 			jsonM3u8.replace("NAME=" + currentQuality, "");
 
 			QualityListItem qualityItem;
-			qualityItem.itag = k;
+			qualityItem.itag = GetITag(currentQuality);
 			qualityItem.quality = currentQuality;
 			qualityItem.qualityDetail = currentQuality;
 			qualityItem.url = currentQualityUrl;
