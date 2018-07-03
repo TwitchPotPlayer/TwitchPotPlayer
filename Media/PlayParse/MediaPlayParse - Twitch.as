@@ -197,20 +197,19 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	string titleStream;
 	string game;
 	string display_name;
+	string views = "";
 	JsonReader StatusChannelReader;
 	JsonValue StatusChannelRoot;
 	if (StatusChannelReader.parse(jsonChannelStatus, StatusChannelRoot) && StatusChannelRoot.isObject()) {
 		if (!isVod) {
 			titleStream = StatusChannelRoot["status"].asString();
-		} else {
-			titleStream = StatusChannelRoot["title"].asString();
-		}
-		game = StatusChannelRoot["game"].asString();
-		if (!isVod) {
 			display_name = StatusChannelRoot["display_name"].asString();
 		} else {
+			titleStream = StatusChannelRoot["title"].asString();
+			views = StatusChannelRoot["views"].asString();
 			display_name = StatusChannelRoot["channel"]["display_name"].asString();
 		}
+		game = StatusChannelRoot["game"].asString();
 	}
 
 	// Read weird token and sig.
@@ -259,7 +258,9 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	MetaData["title"] = titleStream;
 	MetaData["content"] = "— " + titleStream + " | " + game;
 	// TODO check every N seconds viewers.
-	// MetaData["viewCount"] = "195";
+	if (isVod) {
+		MetaData["viewCount"] = views;
+	}
 	MetaData["author"] = display_name;
 	MetaData["chatUrl"] = "https://zik.one/chat/?theme=bttv_dark&channel=" + nickname + "&fade=false&bot_activity=false&prevent_clipping=false";
 	return sourceQualityUrl;
