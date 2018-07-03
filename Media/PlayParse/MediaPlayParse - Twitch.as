@@ -225,8 +225,6 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	// Second request to get list of *.m3u8 urls.
 	string jsonM3u8 = HostUrlGetString(m3u8Api + sig + token, "", headerClientId);
 	jsonM3u8.replace('"', "");
-	HostPrintUTF8(jsonM3u8);	
-
 
 	string m3 = ".m3u8";
 
@@ -257,7 +255,6 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 	MetaData["title"] = titleStream;
 	MetaData["content"] = "— " + titleStream + " | " + game;
-	// TODO check every N seconds viewers.
 	if (isVod) {
 		MetaData["viewCount"] = views;
 	}
