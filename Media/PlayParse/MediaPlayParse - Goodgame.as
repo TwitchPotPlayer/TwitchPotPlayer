@@ -105,7 +105,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 	HostPrintUTF8(titleChannel);
 	// string m3u8Api = "http://hls.goodgame.ru/hls/" + channelId + ".m3u8";
-	string m3u8Api = "https://cdnnow.goodgame.ru/hls/" + channelId + ".m3u8";
+	string m3u8Api = newApi + channelId + ".m3u8";
 	HostPrintUTF8(m3u8Api);
 	MetaData["title"] = titleChannel;
 	MetaData["content"] = titleChannel;
@@ -114,7 +114,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	//Add 4 + 4 qualitites. 
 	//New API is pretty fast, but for some reasons is laggy.
 	//Old API is pretty slow, but works well. Dunno.
-	if (@QualityList !is null && isPremium == "true") {
+	if (@QualityList !is null) {
 		for (int k = 0; k < 4; k++) {
 			string currentApi = newApi;
 			string currentQuality = qualities[k];
@@ -129,7 +129,20 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 			}
 			qualityItem.url = currentApi + channelId + currentQuality + ".m3u8";
 			QualityList.insertLast(qualityItem.toDictionary());
-			if (k == 3 && !isOldApi) {
+
+			//If the channel is not premium, the quality selection is not available.
+			//So leave only the source quality of the old API.
+			if (isPremium != "true") {
+				if (isOldApi) {
+					return m3u8Api;
+				} else {
+					k = -1;
+					isOldApi = true;
+				}
+			}
+			///////////
+
+			if (k >= 3 && !isOldApi) {
 				k = -1;
 				isOldApi = true;
 			}
