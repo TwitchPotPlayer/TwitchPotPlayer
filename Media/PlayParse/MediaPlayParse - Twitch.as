@@ -164,6 +164,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	if (nickname == "") {
 		nickname = HostRegExpParse(path, "https://www.twitch.tv/([-a-zA-Z0-9_]+)");
 	}
+	nickname.MakeLower();
 
 	string vodId = "";
 	if (isVod) {
