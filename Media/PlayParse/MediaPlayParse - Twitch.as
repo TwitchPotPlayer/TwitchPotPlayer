@@ -71,8 +71,7 @@ int GetITag(const string &in qualityName) {
 }
 
 bool PlayitemCheck(const string &in path) {
-	string nickname = HostRegExpParse(path, "twitch.tv/([-a-zA-Z0-9_]+)");
-	return nickname != "";
+	return HostRegExpParse(path, "twitch.tv/([-a-zA-Z0-9_]+)") != "";
 }
 
 string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList, const string &in headerClientId) {
@@ -140,11 +139,8 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	string headerClientId = "Client-ID: 1dviqtp3q3aq68tyvj116mezs3zfdml";
 	// HostOpenConsole();
 
-	bool isVod = false;
+	bool isVod = path.find("twitch.tv/videos/") > 0;
 	bool isClip = false;
-	if (path.find("twitch.tv/videos/") > 0) {
-		isVod = true;
-	}
 	string clipId = HostRegExpParse(path, "clips.twitch.tv/([-a-zA-Z0-9_]+)");
 	HostPrintUTF8(clipId);
 	if (path.find("clips.twitch.tv") >= 0) {
@@ -249,6 +245,5 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		MetaData["viewCount"] = views;
 	}
 	MetaData["author"] = display_name;
-	MetaData["chatUrl"] = "https://zik.one/chat/?theme=bttv_dark&channel=" + nickname + "&fade=false&bot_activity=false&prevent_clipping=false";
 	return sourceQualityUrl;
 }
