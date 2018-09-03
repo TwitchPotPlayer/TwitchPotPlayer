@@ -71,16 +71,8 @@ int GetITag(const string &in qualityName) {
 }
 
 bool PlayitemCheck(const string &in path) {
-	if (path.find("://twitch.tv") >= 0) {
-		return true;
-	}
-	if (path.find("://www.twitch.tv") >= 0) {
-		return true;
-	}
-	if (path.find("://clips.twitch.tv") >= 0) {
-		return true;
-	}
-	return false;
+	string nickname = HostRegExpParse(path, "twitch.tv/([-a-zA-Z0-9_]+)");
+	return nickname != "";
 }
 
 string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList, const string &in headerClientId) {
@@ -160,10 +152,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	}
 	
 
-	string nickname = HostRegExpParse(path, "https://twitch.tv/([-a-zA-Z0-9_]+)");
-	if (nickname == "") {
-		nickname = HostRegExpParse(path, "https://www.twitch.tv/([-a-zA-Z0-9_]+)");
-	}
+	string nickname = HostRegExpParse(path, "twitch.tv/([-a-zA-Z0-9_]+)");
 	nickname.MakeLower();
 
 	string vodId = "";
