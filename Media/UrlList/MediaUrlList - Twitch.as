@@ -1,6 +1,9 @@
 ﻿/*
-	media url search by twitch follows of username
-*/
+	This is the source code of Twitch url list extension.
+	Copyright github.com/23rd, 2018-2019.
+
+	Media url search by Twitch follows of username.
+*/	
 
 //	string GetTitle() 													-> get title for UI
 //	string GetVersion													-> get version for manage

@@ -1,5 +1,6 @@
 ﻿/*
-	Twitch media parse
+	This is the source code of Twitch media parse extension.
+	Copyright github.com/23rd, 2018-2019.
 */	
 
 //	string GetTitle() 									-> get title for UI
