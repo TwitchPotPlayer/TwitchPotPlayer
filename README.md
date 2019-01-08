@@ -32,15 +32,3 @@ After this open PotPlayer and press `Ctrl + U`, you will see following window.
 
 ![image](https://user-images.githubusercontent.com/4051126/41672965-0ed9f11c-74c4-11e8-8643-efe8622cca91.png)
 
-# GoodGame.ru
-GoodGame.ru is a russian live streaming video platform. So information below will be useless for non-russian users.
-
-## /Media/PlayParse/MediaPlayParse - Goodgame.as
-Это расширение позволяет проигрывать в плеере стримы с goodgame, например https://goodgame.ru/channel/miker.
-Как и с твитчом, здесь также отображается в заголовке название стрима и можно выбрать качество.
-Выбор качества реализован двумя типами: с новым API и с устаревшим API. К сожалению новый по каким-то причинам отрабатывает плохо.
-
-## Media/PlayParse/MediaPlayParse - GoodGameVideo.as
-Данное расширение позволяет проигрывать в плеере goodgame воды и клипы. 
-Так как эта функция менее популярна, она выведена в отдельный файл.
-Здесь уже выбора качества нету, так как он не предусмотрен самой площадкой.
