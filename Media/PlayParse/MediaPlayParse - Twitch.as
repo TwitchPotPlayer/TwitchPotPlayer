@@ -76,6 +76,10 @@ bool PlayitemCheck(const string &in path) {
 
 string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList, const string &in headerClientId) {
 	string clipId = HostRegExpParse(path, "clips.twitch.tv/([-a-zA-Z0-9_]+)");
+	// If ID from old url type is empty, find ID from new url type.
+	if (clipId.length() == 0) {
+		clipId = HostRegExpParse(path, "/clip/([-a-zA-Z0-9_]+)");
+	}
 	string clipApi = "https://clips.twitch.tv/api/v2/clips/" + clipId + "/status";
 	string clipStatusApi = "https://api.twitch.tv/kraken/clips/" + clipId;
 
@@ -140,13 +144,10 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	// HostOpenConsole();
 
 	bool isVod = path.find("twitch.tv/videos/") > 0;
-	bool isClip = false;
-	string clipId = HostRegExpParse(path, "clips.twitch.tv/([-a-zA-Z0-9_]+)");
-	HostPrintUTF8(clipId);
-	if (path.find("clips.twitch.tv") >= 0) {
+	if (path.find("clips.twitch.tv") >= 0 ||
+		HostRegExpParse(path, "/clip/([-a-zA-Z0-9_]+)").length() > 0) {
 		return ClipsParse(path, MetaData, QualityList, headerClientId);
 	}
-	
 
 	string nickname = HostRegExpParse(path, "twitch.tv/([-a-zA-Z0-9_]+)");
 	nickname.MakeLower();
