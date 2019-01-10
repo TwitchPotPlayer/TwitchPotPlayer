@@ -24,6 +24,13 @@ After opening link you will see something like this.
 - In description you can see "{Title} | {Game} | {Channel}".
 - Video resolution can be changed in the quality menu in the right bottom corner.
 
+The file `config.ini` adds a few display settings.
+- `showBitrate=1` — shows bitrate in context menu (H). Valid values: 1 or 0.
+- `showFPS=1` — shows fps in context menu (H). Valid values: 1 or 0.
+- `gameInTitle=0` — shows game in title. Valid values: 1 or 0.
+- `gameInContent=1` — shows game in content. Valid values: 1 or 0.
+- `clientID=` — takes clientID for API calls to the Twitch. It is highly recommended to get your own clientID on the Twitch and insert it here. If the value is empty, the default value is taken. If you insert an invalid value, the extension will not work. 
+
 ## /Media/UrlList/MediaUrlList - Twitch.as
 This extension lets you see in `File URL List` all online channels that you follow.
 Unfortunately PotPlayer has no interfrace to login in Twitch yet.
