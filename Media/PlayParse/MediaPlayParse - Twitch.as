@@ -21,7 +21,7 @@ string GetTitle() {
 }
 
 string GetVersion() {
-	return "1";
+	return "1.2";
 }
 
 string GetDesc() {
@@ -56,6 +56,38 @@ class QualityListItem {
 		return ret;
 	}	
 };
+
+class Config {
+	string fullConfig;
+	string clientID;
+	bool showBitrate = false;
+	bool showFPS = true;
+	bool gameInTitle = false;
+	bool gameInContent = true;
+
+	bool isTrue(string option) {
+		return (HostRegExpParse(fullConfig, option + "=([0-1])") == "1");
+	}
+
+	string setClientID() {
+		string c = HostRegExpParse(fullConfig, "clientID=([-a-zA-Z0-9_]+)");
+		if (c == "") {
+			c = "1dviqtp3q3aq68tyvj116mezs3zfdml";
+		}
+		return c;
+	}
+};
+
+Config ReadConfigFile() {
+	Config config;
+	config.fullConfig = HostFileRead(HostFileOpen("Extention\\Media\\PlayParse\\config.ini"), 500);
+	config.showBitrate = config.isTrue("showBitrate");
+	config.showFPS = config.isTrue("showFPS");
+	config.gameInTitle = config.isTrue("gameInTitle");
+	config.gameInContent = config.isTrue("gameInContent");
+	config.clientID = config.setClientID();
+	return config;
+}
 
 int GetITag(const string &in qualityName) {
 	array<string> qualities = {"audio_only", "160p", "360p", "480p", "720p", "720p60", "1080p", "1080p60"};
@@ -139,10 +171,11 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 }
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList) {
+	// HostOpenConsole();
+	Config ConfigData = ReadConfigFile();
 
 	// Any twitch API demands client id in header.
-	string headerClientId = "Client-ID: 1dviqtp3q3aq68tyvj116mezs3zfdml";
-	// HostOpenConsole();
+	string headerClientId = "Client-ID: " + ConfigData.clientID;
 
 	bool isVod = path.find("twitch.tv/videos/") > 0;
 	if (path.find("clips.twitch.tv") >= 0 ||
@@ -231,18 +264,21 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 			QualityListItem qualityItem;
 			qualityItem.itag = GetITag(currentQuality);
 			qualityItem.quality = currentQuality;
-			qualityItem.fps = parseFloat(currentFPS);
+			qualityItem.fps = ConfigData.showFPS ? parseFloat(currentFPS) : 0.0;
 			qualityItem.bitrate = parseInt(currentBitrate) / 1000 + "k";
 			qualityItem.resolution = currentResolution;
 			qualityItem.qualityDetail = currentQuality;
+			if (ConfigData.showBitrate) {
+				qualityItem.qualityDetail += ", bitrate " + qualityItem.bitrate;
+			}
 			qualityItem.url = currentQualityUrl;
 			QualityList.insertLast(qualityItem.toDictionary());
 		}
 	}
 
 
-	MetaData["title"] = titleStream;
-	MetaData["content"] = "— " + titleStream + " | " + game;
+	MetaData["title"] = titleStream + (ConfigData.gameInTitle ? " | " + game : "");
+	MetaData["content"] = "— " + titleStream + (ConfigData.gameInContent ? " | " + game : "");
 	if (isVod) {
 		MetaData["viewCount"] = views;
 	}
