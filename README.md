@@ -1,3 +1,5 @@
+[![Donate](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/23rd/)
+
 # [PotPlayer](http://potplayer.daum.net) Extentions
 PotPlayer is a multimedia software player developed for the Microsoft Windows operating system.
 
@@ -42,3 +44,7 @@ After this open PotPlayer and press `Ctrl + U`, you will see following window.
 # GoodGame.ru
 GoodGame.ru is a russian live streaming video platform.  
 [GoodGame Extensions.](https://github.com/23rd/PotPlayerExtentions/tree/goodgame)
+
+# Support
+[![Donate](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/23rd/)  
+You can support me or require a new extension by becoming the patron.
