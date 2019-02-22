@@ -78,6 +78,10 @@ class Config {
 	}
 };
 
+string audioOnlyRaw = "audio_only";
+string audioOnlyRawVod = "Audio Only";
+string audioOnlyGood = "— Audio Only";
+
 Config ReadConfigFile() {
 	Config config;
 	config.fullConfig = HostFileRead(HostFileOpen("Extention\\Media\\PlayParse\\config.ini"), 500);
@@ -90,7 +94,7 @@ Config ReadConfigFile() {
 }
 
 int GetITag(const string &in qualityName) {
-	array<string> qualities = {"audio_only", "160p", "360p", "480p", "720p", "720p60", "1080p", "1080p60"};
+	array<string> qualities = {audioOnlyGood, "160p", "360p", "480p", "720p", "720p60", "1080p", "1080p60"};
 	qualities.reverse();
 	if (qualityName.find("(source)") > 0) {
 		return 1;
@@ -260,6 +264,10 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 			string currentFPS = HostRegExpParse(currentM3u8, "FRAME-RATE=([a-zA-Z-_.0-9/ ()]+)");
 			string currentBitrate = HostRegExpParse(currentM3u8, "BANDWIDTH=([a-zA-Z-_.0-9/ ()]+)");
 			string currentQualityUrl = "https://" + HostRegExpParse(currentM3u8, "https://([a-zA-Z-_.0-9/]+)" + m3) + m3;
+
+			// Dash allows us to move an "audio_only" element to the end.
+			currentQuality.replace(audioOnlyRawVod, audioOnlyGood);
+			currentQuality.replace(audioOnlyRaw, audioOnlyGood);
 
 			QualityListItem qualityItem;
 			qualityItem.itag = GetITag(currentQuality);
