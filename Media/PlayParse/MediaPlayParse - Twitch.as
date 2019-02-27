@@ -60,6 +60,7 @@ class QualityListItem {
 class Config {
 	string fullConfig;
 	string clientID;
+	string oauthToken;
 	bool showBitrate = false;
 	bool showFPS = true;
 	bool gameInTitle = false;
@@ -90,6 +91,7 @@ Config ReadConfigFile() {
 	config.gameInTitle = config.isTrue("gameInTitle");
 	config.gameInContent = config.isTrue("gameInContent");
 	config.clientID = config.setClientID();
+	config.oauthToken = HostRegExpParse(config.fullConfig, "oauthToken=oauth:([-a-zA-Z0-9_]+)");
 	return config;
 }
 
@@ -201,7 +203,12 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	// Firstly we need to request for api to get pretty weirdly token and sig.
 	string tokenApi = "https://api.twitch.tv/api/channels/" + nickname + "/access_token?need_https=true";
 	if (isVod) {
-		tokenApi = "https://api.twitch.tv/api/vods/" + vodId + "/access_token?need_https=true";
+		string oauth = ConfigData.oauthToken;
+		oauth.replace("oauth:", "");
+		if (oauth.length() > 0) {
+			oauth = "&oauth_token=" + oauth;
+		}
+		tokenApi = "https://api.twitch.tv/api/vods/" + vodId + "/access_token?need_https=true" + oauth;
 	}
 	// Parameter p should be random number.
 	string m3u8Api = "https://usher.ttvnw.net/api/channel/hls/" + nickname + ".m3u8?allow_source=true&p=7278365player_backend=mediaplayer&playlist_include_framerate=true&allow_audio_only=true";

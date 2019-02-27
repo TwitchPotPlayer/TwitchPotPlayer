@@ -32,6 +32,7 @@ The file `config.ini` adds a few display settings.
 - `gameInTitle=0` — shows game in title. Valid values: 1 or 0.
 - `gameInContent=1` — shows game in content. Valid values: 1 or 0.
 - `clientID=` — takes clientID for API calls to the Twitch. It is highly recommended to get your own clientID on the Twitch and insert it here. If the value is empty, the default value is taken. If you insert an invalid value, the extension will not work. 
+- `oauthToken=` — OAuth Token is needed when you want to watch "Subscriber-only" VODs and you are subscribed to this channel. Leave this field blank if you don't need this feature. Valid values: `oauth:fboyX2pnceTQJdUaLqNMFceBPUi9TS`. You can generate your own token from [OAuth Password Generator](https://twitchapps.com/tmi/).
 
 ## /Media/UrlList/MediaUrlList - Twitch.as
 This extension lets you see in `File URL List` all online channels that you follow.
