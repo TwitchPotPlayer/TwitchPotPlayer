@@ -60,25 +60,23 @@ array<dictionary> GetCategorys() {
 	return ret;
 }
 
-array<dictionary> GetChunkOfUsersOnline(string allFollowersNick, string header) {
+array<dictionary> GetChunkOfUsersOnline(string allFollowersIds, string header) {
 	array<dictionary> ret;
 	// Get channels which is online right now.
-	string jsonOfUserOnline = HostUrlGetString("https://api.twitch.tv/kraken/streams?channel=" + allFollowersNick, "", header);
+	string jsonOfUserOnline = HostUrlGetString("https://api.twitch.tv/helix/streams?" + allFollowersIds, "", header);
 
 	// Read json of online channels.
 	JsonReader TwitchOnlineReader;
 	JsonValue TwitchOnlineRoot;
 	if (TwitchOnlineReader.parse(jsonOfUserOnline, TwitchOnlineRoot) && TwitchOnlineRoot.isObject()) {
-		JsonValue itemsName = TwitchOnlineRoot["streams"];
-		if (itemsName.isArray()) {
+		JsonValue streams = TwitchOnlineRoot["data"];
+		if (streams.isArray()) {
 			//Set every online channel in list of urls.
-			for (int k = 0, lenNames = itemsName.size(); k < lenNames; k++) {
-				string isPlaylist = itemsName[k]["stream_type"].asString();
-				string viewers = itemsName[k]["viewers"].asString();
-				string game = itemsName[k]["game"].asString();
-				string display_name = itemsName[k]["channel"]["display_name"].asString();
-				string login = itemsName[k]["channel"]["name"].asString();
-				string title = itemsName[k]["channel"]["status"].asString();
+			for (int k = 0, lenNames = streams.size(); k < lenNames; k++) {
+				string isPlaylist = streams[k]["type"].asString();
+				string viewers = streams[k]["viewer_count"].asString();
+				string login = streams[k]["user_name"].asString();
+				string title = streams[k]["title"].asString();
 				// HostPrintUTF8(login);
 
 				//If channel plays VOD add that string.
@@ -87,8 +85,7 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersNick, string header) 
 				}
 
 				title += " (" + viewers + ")";
-				title = display_name + " | " + title;
-				title += " | " + game;
+				title = login + " | " + title;
 
 				dictionary objectOfChannel;
 				objectOfChannel["url"] = "https://twitch.tv/" + login;
@@ -154,38 +151,16 @@ array<dictionary> GetUrlList(string Category, string Genre, string PathToken, st
 
 	if (TwitchReader.parse(json, TwitchRoot) && TwitchRoot.isObject()) {
 		JsonValue items = TwitchRoot["data"];
-		string parameters = "";
+		string user_id_list = "";
 
 		if (items.isArray()) {
-			// Read every ID in list to set them in parameters.
+			// Read every ID in list to set them in user_id_list.
 			for (int i = 0, len = items.size(); i < len; i++) {
 				JsonValue item = items[i]["to_id"];
-				parameters += "id=" + item.asString() + "&";
+				user_id_list += "user_id=" + item.asString() + "&";
 			}
-
-			// It should be channel1,channel2,channel3...
-			string allFollowersNick = "";
-			string jsonOfNicknames = HostUrlGetString(getNameOfID + parameters, "", header);
-
-			// Read every nickname and insert them in single string.
-			JsonReader TwitchNamesReader;
-			JsonValue TwitchNamesRoot;
-			if (TwitchNamesReader.parse(jsonOfNicknames, TwitchNamesRoot) && TwitchNamesRoot.isObject()) {
-				JsonValue itemsName = TwitchNamesRoot["data"];
-				if (itemsName.isArray()) {
-					for (int k = 0, lenNames = itemsName.size(); k < lenNames; k++) {
-						string login = itemsName[k]["login"].asString();
-						allFollowersNick += login + ",";
-						// Divide every request by 25 usernames.
-						if (k % 25 == 0 || k == lenNames - 1) {
-							ret.insertAt(0, GetChunkOfUsersOnline(allFollowersNick, header));
-							allFollowersNick = "";
-						}
-					}
-				}
-			}
-
-			
+			// It should be user_id=24991404&user_id=18587270&...
+			ret.insertAt(0, GetChunkOfUsersOnline(user_id_list, header));
 		}
 	}
 
