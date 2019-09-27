@@ -63,8 +63,6 @@ class Config {
 	string oauthToken;
 	bool showBitrate = false;
 	bool showFPS = true;
-	bool gameInTitle = false;
-	bool gameInContent = true;
 
 	bool isTrue(string option) {
 		return (HostRegExpParse(fullConfig, option + "=([0-1])") == "1");
@@ -88,8 +86,6 @@ Config ReadConfigFile() {
 	config.fullConfig = HostFileRead(HostFileOpen("Extention\\Media\\PlayParse\\config.ini"), 500);
 	config.showBitrate = config.isTrue("showBitrate");
 	config.showFPS = config.isTrue("showFPS");
-	config.gameInTitle = config.isTrue("gameInTitle");
-	config.gameInContent = config.isTrue("gameInContent");
 	config.clientID = config.setClientID();
 	config.oauthToken = HostRegExpParse(config.fullConfig, "oauthToken=oauth:([-a-zA-Z0-9_]+)");
 	return config;
@@ -156,7 +152,6 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 	}
 
 	string titleClip;
-	string game;
 	string display_name;
 	string views;
 	string created_at;
@@ -164,14 +159,13 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 	JsonValue StatusClipRoot;
 	if (StatusClipReader.parse(jsonStatusClip, StatusClipRoot) && StatusClipRoot.isObject()) {
 		titleClip = StatusClipRoot["title"].asString();
-		game = StatusClipRoot["game"].asString();
 		views = "Views: " + StatusClipRoot["views"].asString();
 		created_at = HostRegExpParse(StatusClipRoot["created_at"].asString(), "([0-9-]+)T");
 		display_name = StatusClipRoot["broadcaster"]["display_name"].asString();
 	}
 
 	MetaData["title"] = titleClip;
-	MetaData["content"] = titleClip + " | " + game + " | " + display_name + " | " + views + " | " + created_at;
+	MetaData["content"] = titleClip + " | " + display_name + " | " + views + " | " + created_at;
 
 	return srcBestUrl;
 }
@@ -227,7 +221,6 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		"",
 		headerClientId);
 	string titleStream;
-	string game;
 	string display_name;
 	string views = "";
 	JsonReader StatusChannelReader;
@@ -237,7 +230,6 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		titleStream = item["title"].asString();
 		display_name = item["user_name"].asString();
 		views = item[isVod ? "view_count" : "viewer_count"].asString();
-		game = item["game"].asString();
 	}
 
 	// Read weird token and sig.
@@ -288,11 +280,11 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	}
 
 
-	MetaData["title"] = titleStream + (ConfigData.gameInTitle ? " | " + game : "");
-	MetaData["content"] = "— " + titleStream + (ConfigData.gameInContent ? " | " + game : "");
 	if (isVod) {
 		MetaData["viewCount"] = views;
 	}
+	MetaData["title"] = titleStream;
+	MetaData["content"] = "— " + titleStream;
 	MetaData["author"] = display_name;
 	return sourceQualityUrl;
 }
