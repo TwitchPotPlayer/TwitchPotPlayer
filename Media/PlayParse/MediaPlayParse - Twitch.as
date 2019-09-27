@@ -211,21 +211,21 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		tokenApi = "https://api.twitch.tv/api/vods/" + vodId + "/access_token?need_https=true" + oauth;
 	}
 	// Parameter p should be random number.
-	string m3u8Api = "https://usher.ttvnw.net/api/channel/hls/" + nickname + ".m3u8?allow_source=true&p=7278365player_backend=mediaplayer&playlist_include_framerate=true&allow_audio_only=true";
-	if (isVod) {
-		m3u8Api = "https://usher.ttvnw.net/vod/" + vodId + ".m3u8?allow_source=true&p=7278365player_backend=mediaplayer&playlist_include_framerate=true&allow_audio_only=true";
-	}
+	string m3u8Api = (isVod
+		? "https://usher.ttvnw.net/vod/" + vodId
+		: "https://usher.ttvnw.net/api/channel/hls/" + nickname)
+	+ ".m3u8?allow_source=true&p=7278365player_backend=mediaplayer&playlist_include_framerate=true&allow_audio_only=true";
 	// &sig={token_sig}&token={token}
 	string jsonToken = HostUrlGetString(tokenApi, "", headerClientId);
 
 	// Get information of current stream.
 	// string idChannel = HostRegExpParse(jsonToken, ":([0-9]+)");
-	string jsonChannelStatus = "";
-	if (!isVod) {
-		jsonChannelStatus = HostUrlGetString("https://api.twitch.tv/kraken/channels/" + nickname, "", headerClientId);
-	} else {
-		jsonChannelStatus = HostUrlGetString("https://api.twitch.tv/kraken/videos/v" + vodId, "", headerClientId);
-	}
+	string jsonChannelStatus = HostUrlGetString(
+		"https://api.twitch.tv/helix/" + (!isVod
+			? "streams?user_login=" + nickname
+			: "videos?id=" + vodId),
+		"",
+		headerClientId);
 	string titleStream;
 	string game;
 	string display_name;
@@ -233,15 +233,11 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	JsonReader StatusChannelReader;
 	JsonValue StatusChannelRoot;
 	if (StatusChannelReader.parse(jsonChannelStatus, StatusChannelRoot) && StatusChannelRoot.isObject()) {
-		if (!isVod) {
-			titleStream = StatusChannelRoot["status"].asString();
-			display_name = StatusChannelRoot["display_name"].asString();
-		} else {
-			titleStream = StatusChannelRoot["title"].asString();
-			views = StatusChannelRoot["views"].asString();
-			display_name = StatusChannelRoot["channel"]["display_name"].asString();
-		}
-		game = StatusChannelRoot["game"].asString();
+		JsonValue item = StatusChannelRoot["data"][0];
+		titleStream = item["title"].asString();
+		display_name = item["user_name"].asString();
+		views = item[isVod ? "view_count" : "viewer_count"].asString();
+		game = item["game"].asString();
 	}
 
 	// Read weird token and sig.
