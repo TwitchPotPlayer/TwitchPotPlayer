@@ -28,6 +28,10 @@ string GetDesc() {
 	return "https://twitch.tv/";
 }
 
+string getReg() {
+	return "([-a-zA-Z0-9_]+)";
+}
+
 class QualityListItem {
 	string url;
 	string quality;
@@ -69,7 +73,7 @@ class Config {
 	}
 
 	string setClientID() {
-		string c = HostRegExpParse(fullConfig, "clientID=([-a-zA-Z0-9_]+)");
+		string c = HostRegExpParse(fullConfig, "clientID=" + getReg());
 		if (c == "") {
 			c = "1dviqtp3q3aq68tyvj116mezs3zfdml";
 		}
@@ -87,7 +91,7 @@ Config ReadConfigFile() {
 	config.showBitrate = config.isTrue("showBitrate");
 	config.showFPS = config.isTrue("showFPS");
 	config.clientID = config.setClientID();
-	config.oauthToken = HostRegExpParse(config.fullConfig, "oauthToken=oauth:([-a-zA-Z0-9_]+)");
+	config.oauthToken = HostRegExpParse(config.fullConfig, "oauthToken=oauth:" + getReg());
 	return config;
 }
 
@@ -106,14 +110,14 @@ int GetITag(const string &in qualityName) {
 }
 
 bool PlayitemCheck(const string &in path) {
-	return HostRegExpParse(path, "twitch.tv/([-a-zA-Z0-9_]+)") != "";
+	return HostRegExpParse(path, "twitch.tv/" + getReg()) != "";
 }
 
 string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList, const string &in headerClientId) {
-	string clipId = HostRegExpParse(path, "clips.twitch.tv/([-a-zA-Z0-9_]+)");
+	string clipId = HostRegExpParse(path, "clips.twitch.tv/" + getReg());
 	// If ID from old url type is empty, find ID from new url type.
 	if (clipId.length() == 0) {
-		clipId = HostRegExpParse(path, "/clip/([-a-zA-Z0-9_]+)");
+		clipId = HostRegExpParse(path, "/clip/" + getReg());
 	}
 	string clipApi = "https://clips.twitch.tv/api/v2/clips/" + clipId + "/status";
 	string clipStatusApi = "https://api.twitch.tv/helix/clips?id=" + clipId;
@@ -153,6 +157,7 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 
 	string titleClip;
 	string displayName;
+	string creatorName;
 	string views;
 	string createdAt;
 	JsonReader StatusClipReader;
@@ -163,10 +168,13 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 		views = "Views: " + item["view_count"].asString();
 		createdAt = HostRegExpParse(item["created_at"].asString(), "([0-9-]+)T");
 		displayName = item["broadcaster_name"].asString();
+		creatorName = item["creator_name"].asString();
 	}
 
 	MetaData["title"] = titleClip;
-	MetaData["content"] = titleClip + " | " + displayName + " | " + views + " | " + createdAt;
+	MetaData["content"] = titleClip + " | " + displayName + " | " + createdAt;
+	MetaData["viewCount"] = views;
+	MetaData["author"] = creatorName;
 
 	return srcBestUrl;
 }
@@ -180,11 +188,11 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 	bool isVod = path.find("twitch.tv/videos/") > 0;
 	if (path.find("clips.twitch.tv") >= 0 ||
-		HostRegExpParse(path, "/clip/([-a-zA-Z0-9_]+)").length() > 0) {
+		HostRegExpParse(path, "/clip/" + getReg()).length() > 0) {
 		return ClipsParse(path, MetaData, QualityList, headerClientId);
 	}
 
-	string nickname = HostRegExpParse(path, "twitch.tv/([-a-zA-Z0-9_]+)");
+	string nickname = HostRegExpParse(path, "twitch.tv/" + getReg());
 	nickname.MakeLower();
 
 	string vodId = "";
