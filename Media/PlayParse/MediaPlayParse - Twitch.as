@@ -116,10 +116,10 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 		clipId = HostRegExpParse(path, "/clip/([-a-zA-Z0-9_]+)");
 	}
 	string clipApi = "https://clips.twitch.tv/api/v2/clips/" + clipId + "/status";
-	string clipStatusApi = "https://api.twitch.tv/kraken/clips/" + clipId;
+	string clipStatusApi = "https://api.twitch.tv/helix/clips?id=" + clipId;
 
 	string jsonClip = HostUrlGetString(clipApi, "", "");
-	string jsonStatusClip = HostUrlGetString(clipStatusApi, "", headerClientId + "\naccept: application/vnd.twitchtv.v5+json");
+	string jsonStatusClip = HostUrlGetString(clipStatusApi, "", headerClientId);
 
 	HostPrintUTF8(jsonStatusClip);
 	JsonReader ClipReader;
@@ -158,10 +158,11 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 	JsonReader StatusClipReader;
 	JsonValue StatusClipRoot;
 	if (StatusClipReader.parse(jsonStatusClip, StatusClipRoot) && StatusClipRoot.isObject()) {
-		titleClip = StatusClipRoot["title"].asString();
-		views = "Views: " + StatusClipRoot["views"].asString();
-		createdAt = HostRegExpParse(StatusClipRoot["created_at"].asString(), "([0-9-]+)T");
-		displayName = StatusClipRoot["broadcaster"]["display_name"].asString();
+		JsonValue item = StatusClipRoot["data"][0];
+		titleClip = item["title"].asString();
+		views = "Views: " + item["view_count"].asString();
+		createdAt = HostRegExpParse(item["created_at"].asString(), "([0-9-]+)T");
+		displayName = item["broadcaster_name"].asString();
 	}
 
 	MetaData["title"] = titleClip;
