@@ -152,20 +152,20 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 	}
 
 	string titleClip;
-	string display_name;
+	string displayName;
 	string views;
-	string created_at;
+	string createdAt;
 	JsonReader StatusClipReader;
 	JsonValue StatusClipRoot;
 	if (StatusClipReader.parse(jsonStatusClip, StatusClipRoot) && StatusClipRoot.isObject()) {
 		titleClip = StatusClipRoot["title"].asString();
 		views = "Views: " + StatusClipRoot["views"].asString();
-		created_at = HostRegExpParse(StatusClipRoot["created_at"].asString(), "([0-9-]+)T");
-		display_name = StatusClipRoot["broadcaster"]["display_name"].asString();
+		createdAt = HostRegExpParse(StatusClipRoot["created_at"].asString(), "([0-9-]+)T");
+		displayName = StatusClipRoot["broadcaster"]["display_name"].asString();
 	}
 
 	MetaData["title"] = titleClip;
-	MetaData["content"] = titleClip + " | " + display_name + " | " + views + " | " + created_at;
+	MetaData["content"] = titleClip + " | " + displayName + " | " + views + " | " + createdAt;
 
 	return srcBestUrl;
 }
@@ -221,14 +221,14 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		"",
 		headerClientId);
 	string titleStream;
-	string display_name;
+	string displayName;
 	string views = "";
 	JsonReader StatusChannelReader;
 	JsonValue StatusChannelRoot;
 	if (StatusChannelReader.parse(jsonChannelStatus, StatusChannelRoot) && StatusChannelRoot.isObject()) {
 		JsonValue item = StatusChannelRoot["data"][0];
 		titleStream = item["title"].asString();
-		display_name = item["user_name"].asString();
+		displayName = item["user_name"].asString();
 		views = item[isVod ? "view_count" : "viewer_count"].asString();
 	}
 
@@ -280,11 +280,9 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	}
 
 
-	if (isVod) {
-		MetaData["viewCount"] = views;
-	}
 	MetaData["title"] = titleStream;
 	MetaData["content"] = "— " + titleStream;
-	MetaData["author"] = display_name;
+	MetaData["viewCount"] = views;
+	MetaData["author"] = displayName;
 	return sourceQualityUrl;
 }
