@@ -50,15 +50,12 @@ string GetDesc() {
 	return "Twitch";
 }
 
-string GetLoginName(string id, string header){
-	string jsonOfUserID = HostUrlGetString("https://api.twitch.tv/helix/users?id=" + id, "", header);
-	JsonReader TwitchOnlineReader;
-	JsonValue TwitchOnlineRoot;
-	if (TwitchOnlineReader.parse(jsonOfUserID, TwitchOnlineRoot) && TwitchOnlineRoot.isObject()) {
-		JsonValue data = TwitchOnlineRoot["data"];
-		return data[0]["login"].asString();
-	}
-	return "failed";
+string getReg() {
+	return "([-a-zA-Z0-9_]+)";
+}
+
+string getApi() {
+	return "https://api.twitch.tv/helix/";
 }
 
 array<dictionary> GetCategorys() {
@@ -73,9 +70,11 @@ array<dictionary> GetCategorys() {
 
 array<dictionary> GetChunkOfUsersOnline(string allFollowersIds, string header) {
 	array<dictionary> ret;
-	// Get channels which is online right now.
-	string jsonOfUserOnline = HostUrlGetString("https://api.twitch.tv/helix/streams?" + allFollowersIds, "", header);
 
+	array<dictionary> nonLatinFollowersIds;
+	string nonLatinFollowersIdsString;
+	// Get channels which is online right now.
+	string jsonOfUserOnline = HostUrlGetString(getApi() + "streams?" + allFollowersIds, "", header);
 	// Read json of online channels.
 	JsonReader TwitchOnlineReader;
 	JsonValue TwitchOnlineRoot;
@@ -85,10 +84,12 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersIds, string header) {
 			//Set every online channel in list of urls.
 			for (int k = 0, lenNames = streams.size(); k < lenNames; k++) {
 				string isPlaylist = streams[k]["type"].asString();
-				string viewers = streams[k]["viewer_count"].asString();				
-				string user_name = streams[k]["user_name"].asString();
-				string user_id = streams[k]["user_id"].asString();
-				string login = GetLoginName(user_id, header);
+				string viewers = streams[k]["viewer_count"].asString();
+				string userName = streams[k]["user_name"].asString();
+				string userId = streams[k]["user_id"].asString();
+				string login = HostRegExpParse(userName, getReg()).length() > 3
+					? userName.MakeLower()
+					: "";
 				string title = streams[k]["title"].asString();
 				// HostPrintUTF8(login);
 
@@ -98,16 +99,40 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersIds, string header) {
 				}
 
 				title += " (" + viewers + ")";
-				title = user_name + " | " + title;
+				title = userName + " | " + title;
 
 				dictionary objectOfChannel;
 				objectOfChannel["url"] = "https://twitch.tv/" + login;
 				objectOfChannel["title"] = title;
-				ret.insertLast(objectOfChannel);
+				if (login == "") {
+					objectOfChannel["id"] = userId;
+					nonLatinFollowersIdsString += "id=" + userId + "&";
+					nonLatinFollowersIds.insertLast(objectOfChannel);
+				} else {
+					ret.insertLast(objectOfChannel);
+				}
 			}
 		}
 	}
 
+	// If we have users with non-latin usernames
+	// we send an additional request to the Twitch API to get their logins.
+	if (nonLatinFollowersIds.length() == 0) {
+		return ret;
+	}
+
+	string jsonOfUserID = HostUrlGetString(getApi() + "users?" + nonLatinFollowersIdsString, "", header);
+	JsonReader TwitchIDReader;
+	JsonValue TwitchIDRoot;
+	if (TwitchIDReader.parse(jsonOfUserID, TwitchIDRoot) && TwitchIDRoot.isObject()) {
+		JsonValue users = TwitchIDRoot["data"];
+		if (users.isArray()) {
+			for (int k = 0, lenNames = users.size(); k < lenNames; k++) {
+				nonLatinFollowersIds[k]["url"] = "https://twitch.tv/" + users[k]["login"].asString();
+			}
+		}
+	}
+	ret.insertAt(ret.length() - 1, nonLatinFollowersIds);
 	return ret;
 }
 
@@ -135,7 +160,7 @@ array<dictionary> GetUrlList(string Category, string Genre, string PathToken, st
 		return ShowError();
 	}
 	
-	string getNameOfID = "https://api.twitch.tv/helix/users?";
+	string getNameOfID = getApi() + "users?";
 	string idOfChannel = "";
 	string header = "Client-ID: 1dviqtp3q3aq68tyvj116mezs3zfdml";
 
@@ -156,7 +181,7 @@ array<dictionary> GetUrlList(string Category, string Genre, string PathToken, st
 	// Get list of id of channel that user follows.
 	// API can get 100 user maximum. 
 	// TODO: increase number of channels via cursors, that gives in json.
-	api = "https://api.twitch.tv/helix/users/follows?first=100&from_id=" + idOfChannel;
+	api = getApi() + "users/follows?first=100&from_id=" + idOfChannel;
 	string json = HostUrlGetString(api, "", header);
 
 	JsonReader TwitchReader;
