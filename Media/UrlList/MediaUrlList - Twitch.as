@@ -1,4 +1,4 @@
-﻿/*
+/*
 	This is the source code of Twitch url list extension.
 	Copyright github.com/23rd, 2018-2019.
 
@@ -50,6 +50,17 @@ string GetDesc() {
 	return "Twitch";
 }
 
+string GetLoginName(string id, string header){
+	string jsonOfUserID = HostUrlGetString("https://api.twitch.tv/helix/users?id=" + id, "", header);
+	JsonReader TwitchOnlineReader;
+	JsonValue TwitchOnlineRoot;
+	if (TwitchOnlineReader.parse(jsonOfUserID, TwitchOnlineRoot) && TwitchOnlineRoot.isObject()) {
+		JsonValue data = TwitchOnlineRoot["data"];
+		return data[0]["login"].asString();
+	}
+	return "failed";
+}
+
 array<dictionary> GetCategorys() {
 	array<dictionary> ret;
 	
@@ -75,7 +86,9 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersIds, string header) {
 			for (int k = 0, lenNames = streams.size(); k < lenNames; k++) {
 				string isPlaylist = streams[k]["type"].asString();
 				string viewers = streams[k]["viewer_count"].asString();
-				string login = streams[k]["user_name"].asString();
+				string user_name = streams[k]["user_name"].asString();
+				string user_id = streams[k]["user_id"].asString();
+				string login = GetLoginName(user_id, header);
 				string title = streams[k]["title"].asString();
 				// HostPrintUTF8(login);
 
@@ -85,7 +98,7 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersIds, string header) {
 				}
 
 				title += " (" + viewers + ")";
-				title = login + " | " + title;
+				title = user_name + " | " + title;
 
 				dictionary objectOfChannel;
 				objectOfChannel["url"] = "https://twitch.tv/" + login;
