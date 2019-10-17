@@ -248,7 +248,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	JsonValue TokenRoot;
 	if (TokenReader.parse(jsonToken, TokenRoot) && TokenRoot.isObject()) {
 		sig = "&sig=" + TokenRoot["sig"].asString();
-		token = "&token=" + TokenRoot["token"].asString();
+		token = "&token=" + HostUrlEncode(TokenRoot["token"].asString());
 	}
 
 	// Second request to get list of *.m3u8 urls.
