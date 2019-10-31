@@ -67,6 +67,8 @@ class Config {
 	string oauthToken;
 	bool showBitrate = false;
 	bool showFPS = true;
+	bool gameInTitle = false;
+	bool gameInContent = true;
 
 	bool isTrue(string option) {
 		return (HostRegExpParse(fullConfig, option + "=([0-1])") == "1");
@@ -90,6 +92,8 @@ Config ReadConfigFile() {
 	config.fullConfig = HostFileRead(HostFileOpen("Extention\\Media\\PlayParse\\config.ini"), 500);
 	config.showBitrate = config.isTrue("showBitrate");
 	config.showFPS = config.isTrue("showFPS");
+	config.gameInTitle = config.isTrue("gameInTitle");
+	config.gameInContent = config.isTrue("gameInContent");
 	config.clientID = config.setClientID();
 	config.oauthToken = HostRegExpParse(config.fullConfig, "oauthToken=oauth:" + getReg());
 	return config;
@@ -97,7 +101,8 @@ Config ReadConfigFile() {
 
 JsonValue SendTwitchAPIRequest(string request) {
 	Config ConfigData = ReadConfigFile();
-	string header = "Client-ID: " + ConfigData.clientID;
+	string v5 = (request.find("kraken") > 0) ? "\naccept: application/vnd.twitchtv.v5+json" : "";
+	string header = "Client-ID: " + ConfigData.clientID + v5;
 
 	string json = HostUrlGetString(request, "", header);
 
@@ -105,9 +110,21 @@ JsonValue SendTwitchAPIRequest(string request) {
 	JsonValue twitchValueRoot;
 
 	if (twitchJsonReader.parse(json, twitchValueRoot) && twitchValueRoot.isObject()) {
-		return twitchValueRoot["data"];
+		if (twitchValueRoot["data"].isArray()) {
+			return twitchValueRoot["data"];
+		} else {
+			return twitchValueRoot;
+		}
 	}
 	return twitchValueRoot;
+}
+
+string GetGameFromId(string id) {
+	JsonValue game = SendTwitchAPIRequest("https://api.twitch.tv/helix/games?id=" + id);
+	if (game.isArray()) {
+		return " | " + game[0]["name"].asString();
+	}
+	return "";
 }
 
 int GetITag(const string &in qualityName) {
@@ -134,17 +151,13 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 	if (clipId.length() == 0) {
 		clipId = HostRegExpParse(path, "/clip/" + getReg());
 	}
-	string clipApi = "https://clips.twitch.tv/api/v2/clips/" + clipId + "/status";
-	string jsonClip = HostUrlGetString(clipApi, "", "");
 
-	JsonReader ClipReader;
-	JsonValue ClipRoot;
-
+	JsonValue clipRoot = SendTwitchAPIRequest("https://clips.twitch.tv/api/v2/clips/" + clipId + "/status");
 	string srcBestUrl = "";
-	if (ClipReader.parse(jsonClip, ClipRoot) && ClipRoot.isObject()) {
+	if (clipRoot.isObject()) {
 		JsonValue qualityArray;
-		if (ClipRoot["quality_options"].isArray()) {
-			qualityArray = ClipRoot["quality_options"];
+		if (clipRoot["quality_options"].isArray()) {
+			qualityArray = clipRoot["quality_options"];
 		} else {
 			return "";
 		}
@@ -171,10 +184,12 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 	string creatorName;
 	string views;
 	string createdAt;
+	string game;
 	JsonValue statusClip = SendTwitchAPIRequest("https://api.twitch.tv/helix/clips?id=" + clipId);
 	if (statusClip.isArray()) {
 		JsonValue item = statusClip[0];
 		titleClip = item["title"].asString();
+		game = GetGameFromId(item["game_id"].asString());
 		views = "Views: " + item["view_count"].asString();
 		createdAt = HostRegExpParse(item["created_at"].asString(), "([0-9-]+)T");
 		displayName = item["broadcaster_name"].asString();
@@ -182,7 +197,7 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 	}
 
 	MetaData["title"] = titleClip;
-	MetaData["content"] = titleClip + " | " + displayName + " | " + createdAt;
+	MetaData["content"] = titleClip + game + " | " + displayName + " | " + createdAt;
 	MetaData["viewCount"] = views;
 	MetaData["author"] = creatorName;
 
@@ -233,17 +248,33 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 	// Get information of current stream.
 	// string idChannel = HostRegExpParse(jsonToken, ":([0-9]+)");
-	JsonValue stream = SendTwitchAPIRequest("https://api.twitch.tv/helix/" + (!isVod
-		? "streams?user_login=" + nickname
-		: "videos?id=" + vodId));
+	JsonValue stream = SendTwitchAPIRequest("https://api.twitch.tv/" + (!isVod
+		? "helix/streams?user_login=" + nickname
+		: "kraken/videos/v" + vodId));
+		// Helix API can't give to us game_id from video_id.
+		//: "videos?id=" + vodId));
 	string titleStream;
 	string displayName;
 	string views = "";
+	string gameId;
+	string game;
 	if (stream.isArray()) {
 		JsonValue item = stream[0];
 		titleStream = item["title"].asString();
 		displayName = item["user_name"].asString();
+		gameId = item["game_id"].asString();
+		HostPrintUTF8(gameId);
 		views = item[isVod ? "view_count" : "viewer_count"].asString();
+	} else if (stream.isObject()) { // This is legacy VOD.
+		titleStream = stream["title"].asString();
+		views = stream["views"].asString();
+		displayName = stream["channel"]["display_name"].asString();
+		game = " | " + stream["game"].asString();
+	}
+	if (ConfigData.gameInTitle || ConfigData.gameInContent) {
+		if (game == "") {
+			game = GetGameFromId(gameId);
+		}
 	}
 
 	// Read weird token and sig.
@@ -294,8 +325,8 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	}
 
 
-	MetaData["title"] = titleStream;
-	MetaData["content"] = "— " + titleStream;
+	MetaData["title"] = titleStream + (ConfigData.gameInTitle ? game : "");
+	MetaData["content"] = "— " + titleStream + (ConfigData.gameInContent ? game : "");
 	MetaData["viewCount"] = views;
 	MetaData["author"] = displayName;
 	return sourceQualityUrl;
