@@ -95,6 +95,21 @@ Config ReadConfigFile() {
 	return config;
 }
 
+JsonValue SendTwitchAPIRequest(string request) {
+	Config ConfigData = ReadConfigFile();
+	string header = "Client-ID: " + ConfigData.clientID;
+
+	string json = HostUrlGetString(request, "", header);
+
+	JsonReader twitchJsonReader;
+	JsonValue twitchValueRoot;
+
+	if (twitchJsonReader.parse(json, twitchValueRoot) && twitchValueRoot.isObject()) {
+		return twitchValueRoot["data"];
+	}
+	return twitchValueRoot;
+}
+
 int GetITag(const string &in qualityName) {
 	array<string> qualities = {audioOnlyGood, "160p", "360p", "480p", "720p", "720p60", "1080p", "1080p60"};
 	qualities.reverse();
@@ -120,12 +135,8 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 		clipId = HostRegExpParse(path, "/clip/" + getReg());
 	}
 	string clipApi = "https://clips.twitch.tv/api/v2/clips/" + clipId + "/status";
-	string clipStatusApi = "https://api.twitch.tv/helix/clips?id=" + clipId;
-
 	string jsonClip = HostUrlGetString(clipApi, "", "");
-	string jsonStatusClip = HostUrlGetString(clipStatusApi, "", headerClientId);
 
-	HostPrintUTF8(jsonStatusClip);
 	JsonReader ClipReader;
 	JsonValue ClipRoot;
 
@@ -160,10 +171,9 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 	string creatorName;
 	string views;
 	string createdAt;
-	JsonReader StatusClipReader;
-	JsonValue StatusClipRoot;
-	if (StatusClipReader.parse(jsonStatusClip, StatusClipRoot) && StatusClipRoot.isObject()) {
-		JsonValue item = StatusClipRoot["data"][0];
+	JsonValue statusClip = SendTwitchAPIRequest("https://api.twitch.tv/helix/clips?id=" + clipId);
+	if (statusClip.isArray()) {
+		JsonValue item = statusClip[0];
 		titleClip = item["title"].asString();
 		views = "Views: " + item["view_count"].asString();
 		createdAt = HostRegExpParse(item["created_at"].asString(), "([0-9-]+)T");
@@ -223,19 +233,14 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 	// Get information of current stream.
 	// string idChannel = HostRegExpParse(jsonToken, ":([0-9]+)");
-	string jsonChannelStatus = HostUrlGetString(
-		"https://api.twitch.tv/helix/" + (!isVod
-			? "streams?user_login=" + nickname
-			: "videos?id=" + vodId),
-		"",
-		headerClientId);
+	JsonValue stream = SendTwitchAPIRequest("https://api.twitch.tv/helix/" + (!isVod
+		? "streams?user_login=" + nickname
+		: "videos?id=" + vodId));
 	string titleStream;
 	string displayName;
 	string views = "";
-	JsonReader StatusChannelReader;
-	JsonValue StatusChannelRoot;
-	if (StatusChannelReader.parse(jsonChannelStatus, StatusChannelRoot) && StatusChannelRoot.isObject()) {
-		JsonValue item = StatusChannelRoot["data"][0];
+	if (stream.isArray()) {
+		JsonValue item = stream[0];
 		titleStream = item["title"].asString();
 		displayName = item["user_name"].asString();
 		views = item[isVod ? "view_count" : "viewer_count"].asString();
