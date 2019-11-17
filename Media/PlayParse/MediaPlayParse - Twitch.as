@@ -77,7 +77,7 @@ class Config {
 	string setClientID() {
 		string c = HostRegExpParse(fullConfig, "clientID=" + getReg());
 		if (c == "") {
-			c = "1dviqtp3q3aq68tyvj116mezs3zfdml";
+			c = "jzkbprff40iqj646a697cyrvl0zt2m6";
 		}
 		return c;
 	}

@@ -59,7 +59,7 @@ string getApi() {
 }
 
 JsonValue SendTwitchAPIRequest(string request) {
-	string header = "Client-ID: 1dviqtp3q3aq68tyvj116mezs3zfdml";
+	string header = "Client-ID: jzkbprff40iqj646a697cyrvl0zt2m6";
 	string json = HostUrlGetString(request, "", header);
 
 	JsonReader twitchJsonReader;
