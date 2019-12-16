@@ -99,24 +99,71 @@ Config ReadConfigFile() {
 	return config;
 }
 
-JsonValue SendTwitchAPIRequest(string request) {
-	Config ConfigData = ReadConfigFile();
-	string v5 = (request.find("kraken") > 0) ? "\naccept: application/vnd.twitchtv.v5+json" : "";
-	string header = "Client-ID: " + ConfigData.clientID + v5;
-
-	string json = HostUrlGetString(request, "", header);
-
+JsonValue ParseJsonFromRequest(string json) {
 	JsonReader twitchJsonReader;
 	JsonValue twitchValueRoot;
 
 	if (twitchJsonReader.parse(json, twitchValueRoot) && twitchValueRoot.isObject()) {
 		if (twitchValueRoot["data"].isArray()) {
 			return twitchValueRoot["data"];
-		} else {
-			return twitchValueRoot;
 		}
 	}
 	return twitchValueRoot;
+}
+
+JsonValue SendTwitchAPIRequest(string request) {
+	Config ConfigData = ReadConfigFile();
+	string v5 = (request.find("kraken") > 0) ? "\naccept: application/vnd.twitchtv.v5+json" : "";
+	string header = "Client-ID: " + ConfigData.clientID + v5;
+
+	string json = HostUrlGetString(request, "", header);
+	return ParseJsonFromRequest(json);
+}
+
+JsonValue SendGraphQLRequest(string request) {
+	Config ConfigData = ReadConfigFile();
+	string json = HostUrlGetString(
+		"https://gql.twitch.tv/gql",
+		"",
+		"Client-ID: " + ConfigData.clientID + "\nContent-Type: application/json",
+		request);
+	HostPrintUTF8("JSON");
+	HostPrintUTF8(json);
+	return ParseJsonFromRequest(json)["data"];
+}
+
+string ClipsBodyRequest(string clipId) {
+	// Multiline strings are not allowed in this application.
+	string s = "";
+	s += '{"query": "{';
+	s += '  clip(slug: \\"' + clipId + '\\") {';
+	s += '    broadcaster {';
+	s += '      displayName';
+	s += '    }';
+	s += '    createdAt';
+	s += '    curator {';
+	s += '      displayName';
+	// s += '      id';
+	s += '    }';
+	// s += '    durationSeconds';
+	// s += '    id';
+	s += '    game {';
+	s += '      name';
+	// s += '      id';
+	s += '    }';
+	// s += '    tiny: thumbnailURL(width: 86, height: 45)';
+	// s += '    small: thumbnailURL(width: 260, height: 147)';
+	// s += '    medium: thumbnailURL(width: 480, height: 272)';
+	s += '    title';
+	s += '    viewCount';
+	s += '    videoQualities {';
+	s += '      frameRate';
+	s += '      quality';
+	s += '      sourceURL';
+	s += '    }';
+	s += '  }';
+	s += '}"}';
+	return s;
 }
 
 string GetGameFromId(string id) {
@@ -152,52 +199,47 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 		clipId = HostRegExpParse(path, "/clip/" + getReg());
 	}
 
-	JsonValue clipRoot = SendTwitchAPIRequest("https://clips.twitch.tv/api/v2/clips/" + clipId + "/status");
+	JsonValue clipRoot = SendGraphQLRequest(ClipsBodyRequest(clipId))["clip"];
 	string srcBestUrl = "";
-	if (clipRoot.isObject()) {
-		JsonValue qualityArray;
-		if (clipRoot["quality_options"].isArray()) {
-			qualityArray = clipRoot["quality_options"];
-		} else {
-			return "";
-		}
+	if (!clipRoot.isObject()) {
+		return "";
+	}
 
-		srcBestUrl = qualityArray[0]["source"].asString();
+	JsonValue qualityArray;
+	if (clipRoot["videoQualities"].isArray()) {
+		qualityArray = clipRoot["videoQualities"];
+	} else {
+		return "";
+	}
 
-		if (@QualityList !is null) {
-			for (int k = 0; k < qualityArray.size(); k++) {
-				string currentQualityUrl = qualityArray[k]["source"].asString();
-				string qualityName = qualityArray[k]["quality"].asString() + "p";
+	srcBestUrl = qualityArray[0]["sourceURL"].asString();
 
-				QualityListItem qualityItem;
-				qualityItem.itag = k;
-				qualityItem.quality = qualityName;
-				qualityItem.qualityDetail = qualityName;
-				qualityItem.url = currentQualityUrl;
-				QualityList.insertLast(qualityItem.toDictionary());
-			}
+	if (@QualityList !is null) {
+		for (int k = 0; k < qualityArray.size(); k++) {
+			string currentQualityUrl = qualityArray[k]["sourceURL"].asString();
+			string qualityName = qualityArray[k]["quality"].asString() + "p";
+
+			QualityListItem qualityItem;
+			qualityItem.itag = k;
+			qualityItem.quality = qualityName;
+			qualityItem.qualityDetail = qualityName;
+			qualityItem.url = currentQualityUrl;
+			qualityItem.fps = qualityArray[k]["frameRate"].asDouble();
+			QualityList.insertLast(qualityItem.toDictionary());
 		}
 	}
 
-	string titleClip;
-	string displayName;
-	string creatorName;
-	string views;
-	string createdAt;
-	string game;
-	JsonValue statusClip = SendTwitchAPIRequest("https://api.twitch.tv/helix/clips?id=" + clipId);
-	if (statusClip.isArray()) {
-		JsonValue item = statusClip[0];
-		titleClip = item["title"].asString();
-		game = GetGameFromId(item["game_id"].asString());
-		views = "Views: " + item["view_count"].asString();
-		createdAt = HostRegExpParse(item["created_at"].asString(), "([0-9-]+)T");
-		displayName = item["broadcaster_name"].asString();
-		creatorName = item["creator_name"].asString();
-	}
+	string titleClip = clipRoot["title"].asString();
+	string displayName = clipRoot["broadcaster"]["displayName"].asString();
+	string creatorName = clipRoot["curator"]["displayName"].asString();
+	string views = "Views: " + clipRoot["viewCount"].asString();
+	string game = clipRoot["game"]["name"].asString();
+	string createdAt = clipRoot["createdAt"].asString();
+	createdAt.replace("T", " ");
+	createdAt.replace("Z", " ");
 
 	MetaData["title"] = titleClip;
-	MetaData["content"] = titleClip + game + " | " + displayName + " | " + createdAt;
+	MetaData["content"] = titleClip + " | " + game + " | " + displayName + " | " + createdAt;
 	MetaData["viewCount"] = views;
 	MetaData["author"] = creatorName;
 
