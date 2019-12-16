@@ -1,4 +1,4 @@
-# [PotPlayer](http://potplayer.daum.net) Extentions
+# Twitch Extension for [PotPlayer](http://potplayer.daum.net)
 PotPlayer is a multimedia software player developed for the Microsoft Windows operating system.
 
 PotPlayer plays Youtube videos quite native with title, description, subtitles and with the choice of quality.
@@ -8,7 +8,7 @@ So I wrote extensions for native playing Twitch streams, VODs and clips.
 # Installation
 - Just download this repository.
 - Unzip it.
-- Copy `Media` folder to `c:\Program Files\DAUM\PotPlayer\Extention\` or `{PotPlayer_Folder}\Extention\`.
+- Copy `Media` folder to `c:\Program Files\DAUM\PotPlayer\Extension\` or `{PotPlayer_Folder}\Extension\`.
 
 # Twitch
 ## /Media/PlayParse/MediaPlayParse - Twitch.as
