@@ -154,7 +154,7 @@ array<dictionary> ShowError() {
 array<dictionary> GetUrlList(string Category, string Genre, string PathToken, string Query, string PageToken) {
 	// HostOpenConsole();
 	// string loginFromFile = HostLoadString("TwitchLogin");
-	string loginFromFile = HostFileRead(HostFileOpen("Extention\\Media\\UrlList\\TwitchLogin.txt"), 500);
+	string loginFromFile = HostFileRead(HostFileOpen("Extension\\Media\\UrlList\\TwitchLogin.txt"), 500);
 	array<dictionary> ret;
 	string api;
 
