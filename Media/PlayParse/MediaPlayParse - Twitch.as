@@ -1,7 +1,7 @@
 ﻿/*
 	This is the source code of Twitch media parse extension.
-	Copyright github.com/23rd, 2018-2019.
-*/	
+	Copyright github.com/23rd, 2018-2020.
+*/
 
 //	string GetTitle() 									-> get title for UI
 //	string GetVersion									-> get version for manage
@@ -21,7 +21,7 @@ string GetTitle() {
 }
 
 string GetVersion() {
-	return "1.3";
+	return "1.4";
 }
 
 string GetDesc() {
@@ -46,7 +46,7 @@ class QualityListItem {
 
 	dictionary toDictionary() {
 		dictionary ret;
-		
+
 		ret["url"] = url;
 		ret["quality"] = quality;
 		ret["qualityDetail"] = qualityDetail;
@@ -58,12 +58,14 @@ class QualityListItem {
 		ret["type3D"] = type3D;
 		ret["is360"] = is360;
 		return ret;
-	}	
+	}
 };
 
 class Config {
 	string fullConfig;
 	string clientID;
+	string clientID_M3U8;
+	string clientSecret;
 	string oauthToken;
 	bool showBitrate = false;
 	bool showFPS = true;
@@ -74,13 +76,10 @@ class Config {
 		return (HostRegExpParse(fullConfig, option + "=([0-1])") == "1");
 	}
 
-	string setClientID() {
-		string c = HostRegExpParse(fullConfig, "clientID=" + getReg());
-		if (c == "") {
-			c = "jzkbprff40iqj646a697cyrvl0zt2m6";
-		}
-		return c;
+	string parse(string s) {
+		return HostRegExpParse(fullConfig, s + getReg());
 	}
+
 };
 
 string audioOnlyRaw = "audio_only";
@@ -94,10 +93,37 @@ Config ReadConfigFile() {
 	config.showFPS = config.isTrue("showFPS");
 	config.gameInTitle = config.isTrue("gameInTitle");
 	config.gameInContent = config.isTrue("gameInContent");
-	config.clientID = config.setClientID();
-	config.oauthToken = HostRegExpParse(config.fullConfig, "oauthToken=oauth:" + getReg());
+	config.clientID = config.parse("clientID=");
+	config.clientSecret = config.parse("clientSecret=");
+	config.oauthToken = config.parse("oauthToken=oauth:");
+	// This ClientID is used only for getting the m3u8 playlist.
+	config.clientID_M3U8 = "jzkbprff40iqj646a697cyrvl0zt2m6";
 	return config;
 }
+
+string GetAppAccessToken() {
+	string postData = '{"grant_type":"client_credentials",';
+	postData += '"client_id":"' + ConfigData.clientID + '",';
+	postData += '"client_secret":"' + ConfigData.clientSecret + '"}';
+
+	string json = HostUrlGetString(
+		"https://id.twitch.tv/oauth2/token",
+		"",
+		"Content-Type: application/json",
+		postData);
+
+	JsonReader twitchJsonReader;
+	JsonValue twitchValueRoot;
+
+	if (twitchJsonReader.parse(json, twitchValueRoot) &&
+		twitchValueRoot.isObject()) {
+		return twitchValueRoot["access_token"].asString();
+	}
+	return "";
+}
+
+Config ConfigData = ReadConfigFile();
+string Authorization = GetAppAccessToken();
 
 JsonValue ParseJsonFromRequest(string json) {
 	JsonReader twitchJsonReader;
@@ -112,16 +138,14 @@ JsonValue ParseJsonFromRequest(string json) {
 }
 
 JsonValue SendTwitchAPIRequest(string request) {
-	Config ConfigData = ReadConfigFile();
 	string v5 = (request.find("kraken") > 0) ? "\naccept: application/vnd.twitchtv.v5+json" : "";
-	string header = "Client-ID: " + ConfigData.clientID + v5;
-
+	string helix = (request.find("helix") > 0) ? "\nAuthorization: Bearer " + Authorization : "";
+	string header = "Client-ID: " + ConfigData.clientID + v5 + helix;
 	string json = HostUrlGetString(request, "", header);
 	return ParseJsonFromRequest(json);
 }
 
 JsonValue SendGraphQLRequest(string request) {
-	Config ConfigData = ReadConfigFile();
 	string json = HostUrlGetString(
 		"https://gql.twitch.tv/gql",
 		"",
@@ -248,10 +272,9 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList) {
 	// HostOpenConsole();
-	Config ConfigData = ReadConfigFile();
 
 	// Any twitch API demands client id in header.
-	string headerClientId = "Client-ID: " + ConfigData.clientID;
+	string headerClientId = "Client-ID: " + ConfigData.clientID_M3U8;
 
 	bool isVod = path.find("twitch.tv/videos/") > 0;
 	if (path.find("clips.twitch.tv") >= 0 ||
