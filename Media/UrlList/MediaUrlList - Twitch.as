@@ -1,9 +1,9 @@
 /*
 	This is the source code of Twitch url list extension.
-	Copyright github.com/23rd, 2018-2019.
+	Copyright github.com/23rd, 2018-2020.
 
 	Media url search by Twitch follows of username.
-*/	
+*/
 
 //	string GetTitle() 													-> get title for UI
 //	string GetVersion													-> get version for manage
@@ -38,12 +38,12 @@ string ServerCheck(string User, string Pass) {
 string ServerLogin(string User, string Pass) {
 	if (User.length() > 2 && User.find(" ") == -1 && User.find(".") == -1) {
 		HostSaveString("TwitchLogin", User);
-	} 
+	}
 	return "Saved!";
 }
 
 string GetVersion() {
-	return "1.1";
+	return "1.4";
 }
 
 string GetDesc() {
@@ -54,12 +54,37 @@ string getReg() {
 	return "([-a-zA-Z0-9_]+)";
 }
 
+string parseConfig(string f, string c) {
+	return HostRegExpParse(f, c + getReg());
+}
+
 string getApi() {
 	return "https://api.twitch.tv/helix/";
 }
 
+class Config {
+	string fullConfig;
+	string clientID;
+	string clientSecret;
+	string twitchLogin;
+};
+
+Config ReadConfigFile() {
+	Config config;
+	string path = "Extension\\Media\\UrlList\\config.ini";
+	config.fullConfig = HostFileRead(HostFileOpen(path), 500);
+	config.clientSecret = parseConfig(config.fullConfig, "clientSecret=");
+	config.clientID = parseConfig(config.fullConfig, "clientID=");
+	config.twitchLogin = parseConfig(config.fullConfig, "twitchLogin=");
+	return config;
+}
+
+Config ConfigData = ReadConfigFile();
+string Authorization = GetAppAccessToken();
+
 JsonValue SendTwitchAPIRequest(string request) {
-	string header = "Client-ID: jzkbprff40iqj646a697cyrvl0zt2m6";
+	string header = "Client-ID: " + ConfigData.clientID;
+	header += "\nAuthorization: Bearer " + Authorization;
 	string json = HostUrlGetString(request, "", header);
 
 	JsonReader twitchJsonReader;
@@ -71,9 +96,30 @@ JsonValue SendTwitchAPIRequest(string request) {
 	return twitchValueRoot;
 }
 
+string GetAppAccessToken() {
+	string postData = '{"grant_type":"client_credentials",';
+	postData += '"client_id":"' + ConfigData.clientID + '",';
+	postData += '"client_secret":"' + ConfigData.clientSecret + '"}';
+
+	string json = HostUrlGetString(
+		"https://id.twitch.tv/oauth2/token",
+		"",
+		"Content-Type: application/json",
+		postData);
+
+	JsonReader twitchJsonReader;
+	JsonValue twitchValueRoot;
+
+	if (twitchJsonReader.parse(json, twitchValueRoot) &&
+		twitchValueRoot.isObject()) {
+		return twitchValueRoot["access_token"].asString();
+	}
+	return "";
+}
+
 array<dictionary> GetCategorys() {
 	array<dictionary> ret;
-	
+
 	dictionary item1;
 	item1["title"] = "{$CP1251=подписки онлайн$}{$CP0=Your Follows$}";
 	item1["Category"] = "most";
@@ -154,7 +200,7 @@ array<dictionary> ShowError() {
 array<dictionary> GetUrlList(string Category, string Genre, string PathToken, string Query, string PageToken) {
 	// HostOpenConsole();
 	// string loginFromFile = HostLoadString("TwitchLogin");
-	string loginFromFile = HostFileRead(HostFileOpen("Extension\\Media\\UrlList\\TwitchLogin.txt"), 500);
+	string loginFromFile = ConfigData.twitchLogin;
 	array<dictionary> ret;
 	string api;
 
@@ -162,7 +208,7 @@ array<dictionary> GetUrlList(string Category, string Genre, string PathToken, st
 	if (loginFromFile.length() < 3) {
 		return ShowError();
 	}
-	
+
 	string idOfChannel = "";
 	// Get user id of twitch through username.
 	JsonValue yourLogin = SendTwitchAPIRequest(getApi() + "users?login=" + loginFromFile);
@@ -172,7 +218,7 @@ array<dictionary> GetUrlList(string Category, string Genre, string PathToken, st
 	idOfChannel = yourLogin[0]["id"].asString();
 
 	// Get list of id of channel that user follows.
-	// API can get 100 user maximum. 
+	// API can get 100 user maximum.
 	// TODO: increase number of channels via cursors, that gives in json.
 	JsonValue items = SendTwitchAPIRequest(getApi() + "users/follows?first=100&from_id=" + idOfChannel);
 	string userIdList = "";
