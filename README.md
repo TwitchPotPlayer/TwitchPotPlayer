@@ -5,6 +5,19 @@ PotPlayer plays Youtube videos quite native with title, description, subtitles a
 In May 2018 developers released first stable version with extensions support (written in AngelScript).
 So I wrote extensions for native playing Twitch streams, VODs and clips.
 
+# Credentials
+
+Since [11 May 2020](https://discuss.dev.twitch.tv/t/23916) Twitch begins to permanently require an authorization for all Twitch API endpoints. So I added an experimental own proxy endpoint to this extension.
+If you do not trust proxy, you can enter your credentials to the `config.ini`.
+
+#### How to fill `config.ini`:
+- Login [dev.twitch.tv](https://dev.twitch.tv/).
+- [Create a new app](https://dev.twitch.tv/dashboard/apps/create).
+- [Register your own app](https://dev.twitch.tv/docs/authentication/#registration).
+- Copy your client id and paste it to the `config.ini`.
+- Copy your client secret and paste it to the `config.ini`.
+- Launch PotPlayer and test it.
+
 # Installation
 - Just download this repository.
 - Unzip it.
@@ -34,7 +47,7 @@ The file `config.ini` adds a few display settings.
 
 ## /Media/UrlList/MediaUrlList - Twitch.as
 This extension lets you see in `File URL List` all online channels that you follow.
-Unfortunately PotPlayer has no interfrace to login in Twitch yet.
+Unfortunately PotPlayer has no interface to login in Twitch yet.
 So you need to put your username in `Media/UrlList/config.ini`.
 After this open PotPlayer and press `Ctrl + U`, you will see following window.
 
