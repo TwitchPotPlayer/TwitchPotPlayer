@@ -59,6 +59,9 @@ string parseConfig(string f, string c) {
 }
 
 string getApi() {
+	if (!IsTwitch) {
+		return "https://potplayer.herokuapp.com/helix/";
+	}
 	return "https://api.twitch.tv/helix/";
 }
 
@@ -81,10 +84,14 @@ Config ReadConfigFile() {
 
 Config ConfigData = ReadConfigFile();
 string Authorization = GetAppAccessToken();
+bool IsTwitch = (Authorization != "");
 
 JsonValue SendTwitchAPIRequest(string request) {
 	string header = "Client-ID: " + ConfigData.clientID;
 	header += "\nAuthorization: Bearer " + Authorization;
+	if (!IsTwitch) {
+		header = "";
+	}
 	string json = HostUrlGetString(request, "", header);
 
 	JsonReader twitchJsonReader;
@@ -97,6 +104,9 @@ JsonValue SendTwitchAPIRequest(string request) {
 }
 
 string GetAppAccessToken() {
+	if (ConfigData.clientID == "" || ConfigData.clientSecret == "") {
+		return "";
+	}
 	string postData = '{"grant_type":"client_credentials",';
 	postData += '"client_id":"' + ConfigData.clientID + '",';
 	postData += '"client_secret":"' + ConfigData.clientSecret + '"}';

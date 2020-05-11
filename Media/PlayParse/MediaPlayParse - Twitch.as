@@ -32,6 +32,13 @@ string getReg() {
 	return "([-a-zA-Z0-9_]+)";
 }
 
+string getApiBase() {
+	if (!IsTwitch) {
+		return "https://potplayer.herokuapp.com";
+	}
+	return "https://api.twitch.tv";
+}
+
 class QualityListItem {
 	string url;
 	string quality;
@@ -102,6 +109,9 @@ Config ReadConfigFile() {
 }
 
 string GetAppAccessToken() {
+	if (ConfigData.clientID == "" || ConfigData.clientSecret == "") {
+		return "";
+	}
 	string postData = '{"grant_type":"client_credentials",';
 	postData += '"client_id":"' + ConfigData.clientID + '",';
 	postData += '"client_secret":"' + ConfigData.clientSecret + '"}';
@@ -124,6 +134,8 @@ string GetAppAccessToken() {
 
 Config ConfigData = ReadConfigFile();
 string Authorization = GetAppAccessToken();
+bool IsTwitch = (Authorization != "");
+string ApiBase = getApiBase();
 
 JsonValue ParseJsonFromRequest(string json) {
 	JsonReader twitchJsonReader;
@@ -141,6 +153,9 @@ JsonValue SendTwitchAPIRequest(string request) {
 	string v5 = (request.find("kraken") > 0) ? "\naccept: application/vnd.twitchtv.v5+json" : "";
 	string helix = (request.find("helix") > 0) ? "\nAuthorization: Bearer " + Authorization : "";
 	string header = "Client-ID: " + ConfigData.clientID + v5 + helix;
+	if (!IsTwitch) {
+		header = "";
+	}
 	string json = HostUrlGetString(request, "", header);
 	return ParseJsonFromRequest(json);
 }
@@ -191,7 +206,7 @@ string ClipsBodyRequest(string clipId) {
 }
 
 string GetGameFromId(string id) {
-	JsonValue game = SendTwitchAPIRequest("https://api.twitch.tv/helix/games?id=" + id);
+	JsonValue game = SendTwitchAPIRequest(ApiBase + "/helix/games?id=" + id);
 	if (game.isArray()) {
 		return " | " + game[0]["name"].asString();
 	}
@@ -313,9 +328,9 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 	// Get information of current stream.
 	// string idChannel = HostRegExpParse(jsonToken, ":([0-9]+)");
-	JsonValue stream = SendTwitchAPIRequest("https://api.twitch.tv/" + (!isVod
-		? "helix/streams?user_login=" + nickname
-		: "kraken/videos/v" + vodId));
+	JsonValue stream = SendTwitchAPIRequest(ApiBase + (!isVod
+		? "/helix/streams?user_login=" + nickname
+		: "/kraken/videos/v" + vodId));
 		// Helix API can't give to us game_id from video_id.
 		//: "videos?id=" + vodId));
 	string titleStream;
