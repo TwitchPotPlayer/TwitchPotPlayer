@@ -7,6 +7,8 @@ So I wrote extensions for native playing Twitch streams, VODs and clips.
 
 # Credentials
 
+Upd: if you want use the Twitch Extension without your own account, just leave a `useOwnCredentials` field in `config.ini` with `0` value.
+
 Since [11 May 2020](https://discuss.dev.twitch.tv/t/23916) Twitch begins to permanently require an authorization for all Twitch API endpoints. So I added an experimental own proxy endpoint to this extension.
 If you do not trust proxy, you can enter your credentials to the `config.ini`.
 

@@ -78,6 +78,7 @@ class Config {
 	bool showFPS = true;
 	bool gameInTitle = false;
 	bool gameInContent = true;
+	bool useOwnCredentials = false;
 
 	bool isTrue(string option) {
 		return (HostRegExpParse(fullConfig, option + "=([0-1])") == "1");
@@ -103,12 +104,17 @@ Config ReadConfigFile() {
 	config.clientID = config.parse("clientID=");
 	config.clientSecret = config.parse("clientSecret=");
 	config.oauthToken = config.parse("oauthToken=oauth:");
+	config.useOwnCredentials = config.isTrue("useOwnCredentials");
 	// This ClientID is used only for getting the m3u8 playlist.
 	config.clientID_M3U8 = "jzkbprff40iqj646a697cyrvl0zt2m6";
 	return config;
 }
 
 string GetAppAccessToken() {
+	if (!ConfigData.useOwnCredentials) {
+		ConfigData.clientID = "g5zg0400k4vhrx2g6xi4hgveruamlv";
+		return "6jftlp4naa4e7esxe3favcmjfno2qw";
+	}
 	if (ConfigData.clientID == "" || ConfigData.clientSecret == "") {
 		return "";
 	}

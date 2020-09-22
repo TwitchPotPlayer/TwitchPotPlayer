@@ -54,10 +54,6 @@ string getReg() {
 	return "([-a-zA-Z0-9_]+)";
 }
 
-string parseConfig(string f, string c) {
-	return HostRegExpParse(f, c + getReg());
-}
-
 string getApi() {
 	if (!IsTwitch) {
 		return "https://potplayer.herokuapp.com/helix/";
@@ -70,15 +66,25 @@ class Config {
 	string clientID;
 	string clientSecret;
 	string twitchLogin;
+	bool useOwnCredentials = false;
+
+	bool isTrue(string option) {
+		return (HostRegExpParse(fullConfig, option + "=([0-1])") == "1");
+	}
+
+	string parse(string s) {
+		return HostRegExpParse(fullConfig, s + getReg());
+	}
 };
 
 Config ReadConfigFile() {
 	Config config;
 	string path = "Extension\\Media\\UrlList\\config.ini";
 	config.fullConfig = HostFileRead(HostFileOpen(path), 500);
-	config.clientSecret = parseConfig(config.fullConfig, "clientSecret=");
-	config.clientID = parseConfig(config.fullConfig, "clientID=");
-	config.twitchLogin = parseConfig(config.fullConfig, "twitchLogin=");
+	config.clientSecret = config.parse("clientSecret=");
+	config.clientID = config.parse("clientID=");
+	config.twitchLogin = config.parse("twitchLogin=");
+	config.useOwnCredentials = config.isTrue("useOwnCredentials");
 	return config;
 }
 
@@ -104,6 +110,10 @@ JsonValue SendTwitchAPIRequest(string request) {
 }
 
 string GetAppAccessToken() {
+	if (!ConfigData.useOwnCredentials) {
+		ConfigData.clientID = "g5zg0400k4vhrx2g6xi4hgveruamlv";
+		return "6jftlp4naa4e7esxe3favcmjfno2qw";
+	}
 	if (ConfigData.clientID == "" || ConfigData.clientSecret == "") {
 		return "";
 	}
