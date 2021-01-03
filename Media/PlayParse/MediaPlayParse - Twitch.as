@@ -167,10 +167,20 @@ JsonValue SendTwitchAPIRequest(string request) {
 }
 
 JsonValue SendGraphQLRequest(string request) {
+	string headers = "";
+	headers += "Client-ID: " + ConfigData.clientID_M3U8;
+	headers += "\nContent-Type: application/json";
+
+	string oauth = ConfigData.oauthToken;
+	if (oauth.length() > 0) {
+		oauth.replace("oauth:", "");
+		headers += "\nAuthorization: OAuth " + oauth;
+	}
+
 	string json = HostUrlGetString(
 		"https://gql.twitch.tv/gql",
 		"",
-		"Client-ID: " + ConfigData.clientID + "\nContent-Type: application/json",
+		headers,
 		request);
 	HostPrintUTF8("JSON");
 	HostPrintUTF8(json);
@@ -209,6 +219,40 @@ string ClipsBodyRequest(string clipId) {
 	s += '  }';
 	s += '}"}';
 	return s;
+}
+
+string PlaybackTokenBodyRequest(string function, string firstParameter) {
+	string s = "";
+	s += '{';
+	s += '    "query": "{';
+	s += '        ' + function + '(';
+	s += '                ' + firstParameter + ',';
+	s += '                params: {';
+	s += '                    platform: \\"web\\",';
+	s += '                    playerBackend: \\"mediaplayer\\",';
+	s += '                    playerType: \\"site\\"';
+	s += '                }) {';
+	s += '            value';
+	s += '            signature';
+	s += '        }';
+	s += '    }"';
+	s += '}';
+
+	return s;
+}
+
+JsonValue LiveTokenRequest(string nickname) {
+	string function = "streamPlaybackAccessToken";
+	return SendGraphQLRequest(PlaybackTokenBodyRequest(
+		function,
+		'channelName: \\"' + nickname + '\\"'))[function];
+}
+
+JsonValue VodTokenRequest(string vodId) {
+	string function = "videoPlaybackAccessToken";
+	return SendGraphQLRequest(PlaybackTokenBodyRequest(
+		function,
+		'id: \\"' + vodId + '\\"'))[function];
 }
 
 string GetGameFromId(string id) {
@@ -314,23 +358,19 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 // 	https://usher.ttvnw.net/vod/
 //  https://api.twitch.tv/api/vods/
 
-	// Firstly we need to request for api to get pretty weirdly token and sig.
-	string tokenApi = "https://api.twitch.tv/api/channels/" + nickname + "/access_token?need_https=true";
-	if (isVod) {
-		string oauth = ConfigData.oauthToken;
-		oauth.replace("oauth:", "");
-		if (oauth.length() > 0) {
-			oauth = "&oauth_token=" + oauth;
-		}
-		tokenApi = "https://api.twitch.tv/api/vods/" + vodId + "/access_token?need_https=true" + oauth;
-	}
 	// Parameter p should be random number.
 	string m3u8Api = (isVod
 		? "https://usher.ttvnw.net/vod/" + vodId
 		: "https://usher.ttvnw.net/api/channel/hls/" + nickname)
-	+ ".m3u8?allow_source=true&p=7278365player_backend=mediaplayer&playlist_include_framerate=true&allow_audio_only=true";
+	+ ".m3u8?"
+	+ "allow_source=true&"
+	+ "p=7278465&"
+	+ "player_backend=mediaplayer&"
+	+ "playlist_include_framerate=true&"
+	+ "allow_audio_only=true&"
+	+ "reassignments_supported=true&"
+	+ "supported_codecs=avc1";
 	// &sig={token_sig}&token={token}
-	string jsonToken = HostUrlGetString(tokenApi, "", headerClientId);
 
 	// Get information of current stream.
 	// string idChannel = HostRegExpParse(jsonToken, ":([0-9]+)");
@@ -363,15 +403,13 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		}
 	}
 
-	// Read weird token and sig.
-	string sig;
-	string token;
-	JsonReader TokenReader;
-	JsonValue TokenRoot;
-	if (TokenReader.parse(jsonToken, TokenRoot) && TokenRoot.isObject()) {
-		sig = "&sig=" + TokenRoot["sig"].asString();
-		token = "&token=" + HostUrlEncode(TokenRoot["token"].asString());
-	}
+	// Firstly we need to request for api to get pretty weirdly token and sig.
+	JsonValue weirdToken = isVod
+		? VodTokenRequest(vodId)
+		: LiveTokenRequest(nickname);
+
+	string sig = "&sig=" + weirdToken["signature"].asString();
+	string token = "&token=" + HostUrlEncode(weirdToken["value"].asString());
 
 	// Second request to get list of *.m3u8 urls.
 	string jsonM3u8 = HostUrlGetString(m3u8Api + sig + token, "", headerClientId);
