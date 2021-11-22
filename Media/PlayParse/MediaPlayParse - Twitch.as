@@ -128,6 +128,8 @@ string GetAppAccessToken() {
 	if (ConfigData.clientID == "" || ConfigData.clientSecret == "") {
 		return "";
 	}
+
+	string uri = "https://id.twitch.tv/oauth2/token";
 	string postData = '{"grant_type":"client_credentials",';
 	postData += '"client_id":"' + ConfigData.clientID + '",';
 	postData += '"client_secret":"' + ConfigData.clientSecret + '"}';
@@ -135,7 +137,7 @@ string GetAppAccessToken() {
 	if (debug) HostPrintUTF8("Getting Authorization token...");
 
 	string json = HostUrlGetString(
-		"https://id.twitch.tv/oauth2/token",
+		uri,
 		"",
 		"Content-Type: application/json",
 		postData);
