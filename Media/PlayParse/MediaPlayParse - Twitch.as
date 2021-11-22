@@ -117,6 +117,12 @@ Config ReadConfigFile() {
 	config.useOwnCredentials = config.isTrue("useOwnCredentials");
 	// This ClientID is used only for getting the m3u8 playlist.
 	config.clientID_M3U8 = "jzkbprff40iqj646a697cyrvl0zt2m6";
+
+	if (config.clientID != "" && config.useOwnCredentials == true)
+	{
+		config.clientID_M3U8 = config.clientID;
+	}
+
 	return config;
 }
 
