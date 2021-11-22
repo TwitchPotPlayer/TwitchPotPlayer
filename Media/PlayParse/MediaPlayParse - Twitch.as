@@ -1,4 +1,4 @@
-﻿/*
+/*
 	This is the source code of Twitch media parse extension.
 	Copyright github.com/23rd, 2018-2020.
 */
@@ -15,6 +15,15 @@
 //	array<dictionary> PlayitemParse(const string &in)	-> parse playitem
 // 	bool PlaylistCheck(const string &in)				-> check playlist
 //	array<dictionary> PlaylistParse(const string &in)	-> parse playlist
+
+bool debug = false;
+
+/// END OF USER VARIABLES
+
+bool OpenConsole() {
+	if (debug) HostOpenConsole();
+	return debug;
+}
 
 string GetTitle() {
 	return "Twitch";
@@ -87,7 +96,6 @@ class Config {
 	string parse(string s) {
 		return HostRegExpParse(fullConfig, s + getReg());
 	}
-
 };
 
 string audioOnlyRaw = "audio_only";
@@ -115,6 +123,7 @@ string GetAppAccessToken() {
 		ConfigData.clientID = "g5zg0400k4vhrx2g6xi4hgveruamlv";
 		return "6jftlp4naa4e7esxe3favcmjfno2qw";
 	}
+
 	if (ConfigData.clientID == "" || ConfigData.clientSecret == "") {
 		return "";
 	}
@@ -122,11 +131,25 @@ string GetAppAccessToken() {
 	postData += '"client_id":"' + ConfigData.clientID + '",';
 	postData += '"client_secret":"' + ConfigData.clientSecret + '"}';
 
+	if (debug) HostPrintUTF8("Getting Authorization token...");
+
 	string json = HostUrlGetString(
 		"https://id.twitch.tv/oauth2/token",
 		"",
 		"Content-Type: application/json",
 		postData);
+
+	if (debug) HostPrintUTF8("Raw response: \n" + json);
+
+	if (json == "")
+	{
+		string msg = "Authorization Error. No response from " + uri;
+		HostPrintUTF8(msg);
+		// throw new Exception(msg);
+		// catch exception and show in message box.
+		// Somehow shove the message into the "pins" that PotPlayer suggests investigating.
+	}
+
 
 	JsonReader twitchJsonReader;
 	JsonValue twitchValueRoot;
@@ -138,10 +161,42 @@ string GetAppAccessToken() {
 	return "";
 }
 
+string DebugConfig() {
+	string debugInfo = "";
+
+	if (debug) {
+		string _auth = Authorization;
+		if (Authorization == "") {
+			_auth = "none";
+		}
+
+		debugInfo =
+		//"ConfigData.fullConfig       :\n" + ConfigData.fullConfig + '\n' +
+		"ConfigData.clientID         : " + ConfigData.clientID + '\n' +
+		"ConfigData.clientID_M3U8    : " + ConfigData.clientID_M3U8 + '\n' +
+		"ConfigData.clientSecret     : " + ConfigData.clientSecret + '\n' +
+		"ConfigData.oauthToken       : " + ConfigData.oauthToken + '\n' +
+		"ConfigData.showBitrate      : " + ConfigData.showBitrate + '\n' +
+		"ConfigData.showFPS          : " + ConfigData.showFPS + '\n' +
+		"ConfigData.gameInTitle      : " + ConfigData.gameInTitle + '\n' +
+		"ConfigData.gameInContent    : " + ConfigData.gameInContent + '\n' +
+		"ConfigData.useOwnCredentials: " + ConfigData.useOwnCredentials + '\n' +
+		"Authorization: " + _auth;
+
+		HostPrintUTF8(debugInfo);
+	}
+
+	return debugInfo;
+}
+
+bool ConsoleOpened = OpenConsole();
+
 Config ConfigData = ReadConfigFile();
 string Authorization = GetAppAccessToken();
 bool IsTwitch = (Authorization != "");
 string ApiBase = getApiBase();
+
+string _debugConfig = DebugConfig();
 
 JsonValue ParseJsonFromRequest(string json) {
 	JsonReader twitchJsonReader;
@@ -336,8 +391,6 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 }
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList) {
-	// HostOpenConsole();
-
 	// Any twitch API demands client id in header.
 	string headerClientId = "Client-ID: " + ConfigData.clientID_M3U8;
 

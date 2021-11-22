@@ -16,6 +16,15 @@
 //	array<dictionary> GetCategorys()									-> get category list
 //	array<dictionary> GetUrlList(string Category, string Genre, string PathToken, string Query, string PageToken)	-> get url list for Category
 
+bool debug = false;
+
+/// END OF USER VARIABLES
+
+bool OpenConsole() {
+	if (debug) HostOpenConsole();
+	return debug;
+}
+
 string GetTitle() {
 	return "{$CP0=Twitch$}";
 }
@@ -85,12 +94,35 @@ Config ReadConfigFile() {
 	config.clientID = config.parse("clientID=");
 	config.twitchLogin = config.parse("twitchLogin=");
 	config.useOwnCredentials = config.isTrue("useOwnCredentials");
+
 	return config;
 }
+
+string DebugConfig() {
+	string debugInfo = "";
+
+	if (debug) {
+		debugInfo =
+		//"ConfigData.fullConfig       :\n" + ConfigData.fullConfig + '\n' +
+		"ConfigData.clientSecret     :  " + ConfigData.clientSecret + '\n' +
+		"ConfigData.clientID         :  " + ConfigData.clientID + '\n' +
+		"ConfigData.twitchLogin      :  " + ConfigData.twitchLogin + '\n' +
+		"ConfigData.useOwnCredentials:  " + ConfigData.useOwnCredentials + '\n' +
+		"Authorization: " + Authorization + '\n';
+
+		HostPrintUTF8(debugInfo);
+	}
+
+	return debugInfo
+}
+
+bool ConsoleOpened = OpenConsole();
 
 Config ConfigData = ReadConfigFile();
 string Authorization = GetAppAccessToken();
 bool IsTwitch = (Authorization != "");
+
+string _debugConfig = DebugConfig();
 
 JsonValue SendTwitchAPIRequest(string request) {
 	string header = "Client-ID: " + ConfigData.clientID;
@@ -114,6 +146,7 @@ string GetAppAccessToken() {
 		ConfigData.clientID = "g5zg0400k4vhrx2g6xi4hgveruamlv";
 		return "6jftlp4naa4e7esxe3favcmjfno2qw";
 	}
+
 	if (ConfigData.clientID == "" || ConfigData.clientSecret == "") {
 		return "";
 	}
@@ -126,6 +159,17 @@ string GetAppAccessToken() {
 		"",
 		"Content-Type: application/json",
 		postData);
+
+	if (debug) HostPrintUTF8("Raw response: \n" + json);
+
+	if (json == "")
+	{
+		string msg = "Authorization Error. No response from " + uri;
+		HostPrintUTF8(msg);
+		// throw new Exception(msg);
+		// catch exception and show in message box.
+		// Somehow shove the message into the "pins" that PotPlayer suggests investigating.
+	}
 
 	JsonReader twitchJsonReader;
 	JsonValue twitchValueRoot;
@@ -166,7 +210,7 @@ array<dictionary> GetChunkOfUsersOnline(string allFollowersIds) {
 				? userName.MakeLower()
 				: "";
 			string title = streams[k]["title"].asString();
-			// HostPrintUTF8(login);
+			if (debug) HostPrintUTF8(login);
 
 			//If channel plays VOD add that string.
 			if (isPlaylist != "live") {
@@ -218,7 +262,6 @@ array<dictionary> ShowError() {
 }
 
 array<dictionary> GetUrlList(string Category, string Genre, string PathToken, string Query, string PageToken) {
-	// HostOpenConsole();
 	// string loginFromFile = HostLoadString("TwitchLogin");
 	string loginFromFile = ConfigData.twitchLogin;
 	array<dictionary> ret;
