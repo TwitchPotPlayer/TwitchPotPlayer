@@ -99,6 +99,48 @@ Config ReadConfigFile() {
 	return config;
 }
 
+string GetAppAccessToken() {
+	if (!ConfigData.useOwnCredentials) {
+		ConfigData.clientID = "g5zg0400k4vhrx2g6xi4hgveruamlv";
+		return "6jftlp4naa4e7esxe3favcmjfno2qw";
+	}
+
+	if (ConfigData.clientID == "" || ConfigData.clientSecret == "") {
+		return "";
+	}
+
+	string uri = "https://id.twitch.tv/oauth2/token";
+	string postData = '{"grant_type":"client_credentials",';
+	postData += '"client_id":"' + ConfigData.clientID + '",';
+	postData += '"client_secret":"' + ConfigData.clientSecret + '"}';
+
+	string json = HostUrlGetString(
+		uri,
+		"",
+		"Content-Type: application/json",
+		postData);
+
+	if (debug) HostPrintUTF8("Raw response: \n" + json);
+
+	if (json == "")
+	{
+		string msg = "Authorization Error. No response from " + uri;
+		HostPrintUTF8(msg);
+		// throw new Exception(msg);
+		// catch exception and show in message box.
+		// Somehow shove the message into the "pins" that PotPlayer suggests investigating.
+	}
+
+	JsonReader twitchJsonReader;
+	JsonValue twitchValueRoot;
+
+	if (twitchJsonReader.parse(json, twitchValueRoot) &&
+		twitchValueRoot.isObject()) {
+		return twitchValueRoot["access_token"].asString();
+	}
+	return "";
+}
+
 string DebugConfig() {
 	string debugInfo = "";
 
@@ -146,47 +188,6 @@ JsonValue SendTwitchAPIRequest(string request) {
 	return twitchValueRoot;
 }
 
-string GetAppAccessToken() {
-	if (!ConfigData.useOwnCredentials) {
-		ConfigData.clientID = "g5zg0400k4vhrx2g6xi4hgveruamlv";
-		return "6jftlp4naa4e7esxe3favcmjfno2qw";
-	}
-
-	if (ConfigData.clientID == "" || ConfigData.clientSecret == "") {
-		return "";
-	}
-
-	string uri = "https://id.twitch.tv/oauth2/token";
-	string postData = '{"grant_type":"client_credentials",';
-	postData += '"client_id":"' + ConfigData.clientID + '",';
-	postData += '"client_secret":"' + ConfigData.clientSecret + '"}';
-
-	string json = HostUrlGetString(
-		uri,
-		"",
-		"Content-Type: application/json",
-		postData);
-
-	if (debug) HostPrintUTF8("Raw response: \n" + json);
-
-	if (json == "")
-	{
-		string msg = "Authorization Error. No response from " + uri;
-		HostPrintUTF8(msg);
-		// throw new Exception(msg);
-		// catch exception and show in message box.
-		// Somehow shove the message into the "pins" that PotPlayer suggests investigating.
-	}
-
-	JsonReader twitchJsonReader;
-	JsonValue twitchValueRoot;
-
-	if (twitchJsonReader.parse(json, twitchValueRoot) &&
-		twitchValueRoot.isObject()) {
-		return twitchValueRoot["access_token"].asString();
-	}
-	return "";
-}
 
 array<dictionary> GetCategorys() {
 	array<dictionary> ret;
