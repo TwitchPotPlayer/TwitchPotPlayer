@@ -17,6 +17,7 @@
 //	array<dictionary> GetUrlList(string Category, string Genre, string PathToken, string Query, string PageToken)	-> get url list for Category
 
 bool debug = false;
+bool verbose = false;
 
 /// END OF USER VARIABLES
 
@@ -102,8 +103,12 @@ string DebugConfig() {
 	string debugInfo = "";
 
 	if (debug) {
-		debugInfo =
-		//"ConfigData.fullConfig       :\n" + ConfigData.fullConfig + '\n' +
+
+		if (verbose) {
+			debugInfo += "ConfigData.fullConfig       :\n" + ConfigData.fullConfig + '\n';
+		}
+
+		debugInfo +=
 		"ConfigData.clientSecret     :  " + ConfigData.clientSecret + '\n' +
 		"ConfigData.clientID         :  " + ConfigData.clientID + '\n' +
 		"ConfigData.twitchLogin      :  " + ConfigData.twitchLogin + '\n' +

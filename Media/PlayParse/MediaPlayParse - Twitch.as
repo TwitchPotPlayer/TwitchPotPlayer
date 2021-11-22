@@ -17,6 +17,7 @@
 //	array<dictionary> PlaylistParse(const string &in)	-> parse playlist
 
 bool debug = false;
+bool verbose = false;
 
 /// END OF USER VARIABLES
 
@@ -170,8 +171,12 @@ string DebugConfig() {
 			_auth = "none";
 		}
 
-		debugInfo =
-		//"ConfigData.fullConfig       :\n" + ConfigData.fullConfig + '\n' +
+		if (verbose) {
+			debugInfo +=
+			"ConfigData.fullConfig       :\n" + ConfigData.fullConfig + '\n';
+		}
+
+		debugInfo +=
 		"ConfigData.clientID         : " + ConfigData.clientID + '\n' +
 		"ConfigData.clientID_M3U8    : " + ConfigData.clientID_M3U8 + '\n' +
 		"ConfigData.clientSecret     : " + ConfigData.clientSecret + '\n' +
