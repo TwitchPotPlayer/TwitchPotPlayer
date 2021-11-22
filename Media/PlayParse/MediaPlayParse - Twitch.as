@@ -105,7 +105,8 @@ string audioOnlyGood = "— Audio Only";
 
 Config ReadConfigFile() {
 	Config config;
-	config.fullConfig = HostFileRead(HostFileOpen("Extension\\Media\\PlayParse\\config.ini"), 500);
+	string path = "Extension\\Media\\PlayParse\\config.ini";
+	config.fullConfig = HostFileRead(HostFileOpen(path), 500);
 	config.showBitrate = config.isTrue("showBitrate");
 	config.showFPS = config.isTrue("showFPS");
 	config.gameInTitle = config.isTrue("gameInTitle");
