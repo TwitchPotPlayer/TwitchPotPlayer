@@ -45,8 +45,8 @@ bool HostCheckMediaFile(const string &in filename, bool Video, bool Audio, bool 
 string HostGetTempFolder()
 	Get temp folder
 
-string HostGetExtention(const string &in)
-	Get file extention
+string HostGetExtension(const string &in)
+	Get file extension
 
 string HostMBCSToUTF8(const string &in)
 	Convert multibyte to UTF8
@@ -69,8 +69,14 @@ string HostUTF16ToUTF8(const string &in)
 string HostUrlGetString(const string &in url, const string &in UserAgent = "", const string &in Header = "", const string &in PostData = "", bool NoCookie = false)
 	Get or Post HTTP(S) resource
 
+string HostUrlGetStringWithAPI(const string &in url, const string &in UserAgent = "", const string &in Header = "", const string &in PostData = "", bool NoCookie = false)
+	Get or Post HTTP(S) resource with API key
+
 uintptr HostOpenHTTP(const string &in url, const string &in UserAgent = "", const string &in Header = "", const string &in PostData = "", bool NoCookie = false)
 	Open Get or Post HTTP(S) resource
+
+uintptr HostOpenHTTPWithAPI(const string &in url, const string &in UserAgent = "", const string &in Header = "", const string &in PostData = "", bool NoCookie = false)
+	Open Get or Post HTTP(S) resource with API key
 
 string HostGetContentHTTP(uintptr http)
 	Get Content data
@@ -83,9 +89,6 @@ int HostGetStatusHTTP(uintptr http)
 
 void HostCloseHTTP(uintptr http)
 	Close http
-
-string HostUrlGetStringGoogle(const string &in url, const string &in UserAgent = "", const string &in Header = "", const string &in PostData = "", bool NoCookie = false)
-	Get or Post HTTP(S) resource with google APP key
 
 uintptr HostFileOpen(const string &in filename)
 	Open local file
@@ -138,6 +141,21 @@ string HostGzipDeflate(const string &in data)
 string HostHashMD5(const string &in data)
 	Get MD5
 
+string HostHashSHA(const string &in data)
+	Get SHA
+
+string HostHashSHA1(const string &in data)
+	Get SHA1
+
+string HostHashSHA256(const string &in data)
+	Get SHA 256
+
+string HostHashSHA384(const string &in data)
+	Get SHA 384
+
+string HostHashSHA512(const string &in data)
+	Get SHA 512
+
 bool HostCompareMovieName(const string &in filename1, const string &in filename2)
 	Compare filename1 with filename2
 
@@ -157,7 +175,7 @@ string HostIso639LangName()
 	Get current ISO639 Language name
 
 string HostIso3166CtryName()
-	Get current ISO 3166 contry name
+	Get current ISO 3166 country name
 
 string HostRegExpParse(const string &in str, const string &in pattern)
 	const std::regex regex(pattern);
@@ -174,7 +192,7 @@ bool HostRegExpParse(const string &in str, const string &in pattern, array<dicti
 	const std::regex regex(pattern);
 	std::cmatch match;
 	bool ret = std::regex_search(str, match, regex);
-	
+
 	if (ret)
 	{
 		assign match -> dic ...  "first" and "second"
@@ -208,6 +226,13 @@ uintptr HostString2UIntPtr(const string &in var)
 
 string HostUIntPtr2String(uintptr ptr)
 	C string(char *) to script string
+
+void HostSetUrlUserAgentHTTP(const string &url, const string &userAgent)
+	Set useragent for HTTP url
+
+void HostSetUrlHeaderHTTP(const string &url, const string &header)
+	Set http header for HTTP url
+
 
 ------------------------PotPlayer's builtin class----------------------------------
 ------------------------string
@@ -320,4 +345,3 @@ string HostUIntPtr2String(uintptr ptr)
 
 ------XmlRpcClient
 	bool execute(const string &in cmd, const XmlRpcValue &in param, XmlRpcValue &out result)
-
