@@ -160,7 +160,7 @@ string DebugConfig() {
 		HostPrintUTF8(debugInfo);
 	}
 
-	return debugInfo
+	return debugInfo;
 }
 
 bool ConsoleOpened = OpenConsole();
