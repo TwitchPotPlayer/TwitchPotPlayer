@@ -536,11 +536,12 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	jsonM3u8.replace('"', "");
 
 	string m3 = ".m3u8";
-
 	string sourceQualityUrl = "https://" + HostRegExpParse(jsonM3u8, "https://([a-zA-Z-_.0-9/]+)" + m3) + m3;
+	array<string> arrayOfM3u8 = {"list is empty"};
 
+	/// TODO: verbose output of array
 	if (@QualityList !is null) {
-		array<string> arrayOfM3u8 = jsonM3u8.split("#EXT-X-MEDIA:");
+		arrayOfM3u8 = jsonM3u8.split("#EXT-X-MEDIA:");
 		for (int k = 1, len = arrayOfM3u8.size(); k < len; k++) {
 			string currentM3u8 = arrayOfM3u8[k];
 			string currentQuality = HostRegExpParse(currentM3u8, "NAME=([a-zA-Z-_.0-9/ ()]+)");
@@ -573,6 +574,19 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	MetaData["content"] = "— " + titleStream + (ConfigData.gameInContent ? game : "");
 	MetaData["viewCount"] = views;
 	MetaData["author"] = displayName;
+
+	debug_msg = ""
+	+ "## jsonM3u8: " + jsonM3u8 + "\n"
+	+ "## sourceQualityUrl: " + sourceQualityUrl + "\n"
+	/// If not null, then false; If null, then true.
+	+ "## QualityListIsNull: " + ((@QualityList !is null) ? "false" : "true") + "\n"
+	/// Need DictionaryToString
+	//+ "## MetaData[\"title\"]: " + MetaData["title"].asString() + "\n"
+	//+ "## MetaData[\"content\"]: " + MetaData["content"] + "\n"
+	//+ "## MetaData[\"viewCount\"]: " + MetaData["viewCount"] + "\n"
+	//+ "## MetaData[\"author\"]: " + MetaData["author"] + "\n"
+	+ "## Returning string 'sourceQualityUrl'...";
+	HostPrintUTF8(debug_msg);
 
 	HostPrintUTF8("#### </PlayItemParse> ####");
 	return sourceQualityUrl;
