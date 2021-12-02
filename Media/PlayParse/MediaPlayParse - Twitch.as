@@ -232,6 +232,18 @@ JsonValue SendTwitchAPIRequest(string request) {
 		header = "";
 	}
 	string json = HostUrlGetString(request, "", header);
+
+	if (debug) {
+		string _s = "#### <SendTwitchAPIRequest> ####" + "\n"
+		+ "request:\n{{\n" + request + "\n}}\n"
+		+ "v5: " + v5 + "\n"
+		+ "helix: " + helix + "\n"
+		+ "header:\n{{\n" + header + "\n}}\n"
+		+ "json: " + json + "\n"
+		+ "#### </SendTwitchAPIRequest> ####";
+		HostPrintUTF8(_s);
+	}
+
 	return ParseJsonFromRequest(json);
 }
 
