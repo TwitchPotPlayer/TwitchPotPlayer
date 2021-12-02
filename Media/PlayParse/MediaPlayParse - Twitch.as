@@ -49,6 +49,11 @@ string getApiBase() {
 	return "https://api.twitch.tv";
 }
 
+// TODO: overload the Boolean type with toString() method. Currently impossible.
+string convertBooleanToString(bool value) {
+	return value ? "true" : "false";
+}
+
 class QualityListItem {
 	string url;
 	string quality;
@@ -420,6 +425,8 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 }
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList) {
+	HostPrintUTF8("#### <PlayItemParse> ####");
+
 	// Any twitch API demands client id in header.
 	string headerClientId = "Client-ID: " + ConfigData.clientID_M3U8;
 
@@ -436,10 +443,9 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	if (isVod) {
 		vodId = HostRegExpParse(path, "twitch.tv/videos/([0-9]+)");
 	}
-	HostPrintUTF8(vodId);
-// 	https://usher.ttvnw.net/vod/
-//  https://api.twitch.tv/api/vods/
 
+	// 	https://usher.ttvnw.net/vod/
+	//  https://api.twitch.tv/api/vods/
 	// Parameter p should be random number.
 	string m3u8Api = (isVod
 		? "https://usher.ttvnw.net/vod/" + vodId
@@ -454,6 +460,17 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	+ "supported_codecs=avc1";
 	// &sig={token_sig}&token={token}
 
+	string debug_msg = ""
+	+ "## vodId: " + vodId + "\n"
+	+ "## m3u8Api: " + m3u8Api + "\n"
+	+ "## ApiBase: " + ApiBase + "\n"
+	+ "## isVod: " + isVod + "\n"
+	+ "## nickname: " + nickname + "\n"
+	+ "## vodId: " + vodId + "\n"
+	+ "## urlSuffix: " + (!isVod ? "/helix/streams?user_login=" + nickname : "/kraken/videos/v" + vodId)
+	+ "## Getting stream information via SendTwitchAPIRequest...";
+	HostPrintUTF8(debug_msg);
+
 	// Get information of current stream.
 	// string idChannel = HostRegExpParse(jsonToken, ":([0-9]+)");
 	JsonValue stream = SendTwitchAPIRequest(ApiBase + (!isVod
@@ -461,19 +478,20 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		: "/kraken/videos/v" + vodId));
 		// Helix API can't give to us game_id from video_id.
 		//: "videos?id=" + vodId));
+	bool streamIsArray = stream.isArray();
+	bool streamIsLegacyVod = ( !stream.isArray() && stream.isObject());
 	string titleStream;
 	string displayName;
 	string views = "";
 	string gameId;
 	string game;
-	if (stream.isArray()) {
+	if (streamIsArray) {
 		JsonValue item = stream[0];
 		titleStream = item["title"].asString();
 		displayName = item["user_name"].asString();
 		gameId = item["game_id"].asString();
-		HostPrintUTF8(gameId);
 		views = item[isVod ? "view_count" : "viewer_count"].asString();
-	} else if (stream.isObject()) { // This is legacy VOD.
+	} else if (streamIsLegacyVod) { // This is legacy VOD.
 		titleStream = stream["title"].asString();
 		views = stream["views"].asString();
 		displayName = stream["channel"]["display_name"].asString();
@@ -485,6 +503,18 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		}
 	}
 
+	debug_msg = ""
+	+ "## streamIsArray: " + convertBooleanToString(streamIsArray) + "\n"
+	+ "## streamIsLegacyVod: " + convertBooleanToString(streamIsLegacyVod) + "\n"
+	+ "## stream: " + stream.asString() + "\n"
+	+ "## titleStream: " + titleStream + "\n"
+	+ "## displayName: " + displayName + "\n"
+	+ "## views: " + views + "\n"
+	+ "## gameId: " + gameId + "\n"
+	+ "## game: " + game + "\n"
+	+ "## Geting stream token...";
+	HostPrintUTF8(debug_msg);
+
 	// Firstly we need to request for api to get pretty weirdly token and sig.
 	JsonValue weirdToken = isVod
 		? VodTokenRequest(vodId)
@@ -492,6 +522,14 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 	string sig = "&sig=" + weirdToken["signature"].asString();
 	string token = "&token=" + HostUrlEncode(weirdToken["value"].asString());
+
+	debug_msg = ""
+	+ "## tokenRequestResponse: " + weirdToken.asString() + "\n"
+	+ "## tokenType: " + (isVod ? "VodToken" : "LiveToken") + "\n"
+	+ "## sig: " + sig + "\n"
+	+ "## token: " + token + "\n"
+	+ "## Getting list of M3U8 URLs...";
+	HostPrintUTF8(debug_msg);
 
 	// Second request to get list of *.m3u8 urls.
 	string jsonM3u8 = HostUrlGetString(m3u8Api + sig + token, "", headerClientId);
@@ -535,5 +573,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	MetaData["content"] = "— " + titleStream + (ConfigData.gameInContent ? game : "");
 	MetaData["viewCount"] = views;
 	MetaData["author"] = displayName;
+
+	HostPrintUTF8("#### </PlayItemParse> ####");
 	return sourceQualityUrl;
 }
