@@ -215,9 +215,12 @@ string _debugConfig = DebugConfig();
 JsonValue ParseJsonFromRequest(string json) {
 	JsonReader twitchJsonReader;
 	JsonValue twitchValueRoot;
-
 	if (twitchJsonReader.parse(json, twitchValueRoot) && twitchValueRoot.isObject()) {
 		if (twitchValueRoot["data"].isArray()) {
+			if (debug) {
+				string _json = twitchValueRoot["data"].asString();
+				HostPrintUTF8("#### <ParseJsonFromRequest>\ndata: "+ _json + "\n#### </ParseJsonFromRequest> ####");
+			}
 			return twitchValueRoot["data"];
 		}
 	}
