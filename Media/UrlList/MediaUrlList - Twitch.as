@@ -16,7 +16,8 @@
 //	array<dictionary> GetCategorys()									-> get category list
 //	array<dictionary> GetUrlList(string Category, string Genre, string PathToken, string Query, string PageToken)	-> get url list for Category
 
-bool debug = false;
+bool debug = false; /// open console to view debug output
+bool showSensitiveInfo = false; /// Output info containing your tokens and secrets
 bool verbose = false;
 
 /// END OF USER VARIABLES
