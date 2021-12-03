@@ -266,12 +266,10 @@ JsonValue ParseJsonFromRequest(string json) {
 	if (twitchJsonReader.parse(json, twitchValueRoot) && twitchValueRoot.isObject()) {
 		if (twitchValueRoot["data"].isArray()) {
 			/// DEBUG OUTPUT
-			string debug_json = twitchValueRoot["data"].asString(); /// TODO: check for sensitive info
 			string debug_msg = ""
-			+ "#### <ParseJsonFromRequest>\n"
-			+ "## data: " + debug_json + "\n"
-			+ "#### </ParseJsonFromRequest> ####";
-			HostPrintUTF8(debug_msg);
+			+ "## isArray: " + twitchValueRoot["data"].isArray() + "\n"
+			+ "## size: " + twitchValueRoot["data"].getKeys().size() + "\n";
+			HostPrintUTF8(debug_msg + "#### </ParseJsonFromRequest> ####");
 
 			return twitchValueRoot["data"];
 		}
