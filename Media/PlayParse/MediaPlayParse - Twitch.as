@@ -407,9 +407,12 @@ string PlaybackTokenBodyRequest(string function, string firstParameter) {
 
 JsonValue LiveTokenRequest(string nickname) {
 	string function = "streamPlaybackAccessToken";
-	return SendGraphQLRequest(PlaybackTokenBodyRequest(
+	HostPrintUTF8("#### <LiveTokenRequest> ####");
+	JsonValue value = SendGraphQLRequest(PlaybackTokenBodyRequest(
 		function,
 		'channelName: \\"' + nickname + '\\"'))[function];
+	HostPrintUTF8("#### </LiveTokenRequest> ####");
+	return value;
 }
 
 JsonValue VodTokenRequest(string vodId) {
