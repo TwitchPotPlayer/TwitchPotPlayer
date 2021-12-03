@@ -445,6 +445,17 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	bool pathContainsClipsSubdomain = path.find("clips.twitch.tv") >= 0;
 	bool pathContainsClipSubdirectory = HostRegExpParse(path, "/clip/" + getReg()).length() > 0;
 	bool isClip = (pathContainsClipsSubdomain || pathContainsClipSubdirectory);
+	if (isClip) {
+		/// DEBUG OUTPUT
+		string debug_msg = ""
+		+ "## headerClientId: " + debug_headerClientId + "\n"
+		+ "## isVod: " + ConvertBooleanToString(isVod);
+		HostPrintUTF8(debug_msg);
+
+		value = ClipsParse(path, MetaData, QualityList, headerClientId);
+
+		HostPrintUTF8("#### </PlayItemParse> ####");
+		return value;
 	}
 
 	string nickname = HostRegExpParse(path, "twitch.tv/" + getReg());
