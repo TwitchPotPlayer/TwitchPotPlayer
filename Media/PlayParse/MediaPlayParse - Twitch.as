@@ -260,6 +260,7 @@ string ApiBase = getApiBase();
 string _debugConfig = DebugConfig();
 
 JsonValue ParseJsonFromRequest(string json) {
+	HostPrintUTF8 ("#### <ParseJsonFromRequest> ####");
 	JsonReader twitchJsonReader;
 	JsonValue twitchValueRoot;
 	if (twitchJsonReader.parse(json, twitchValueRoot) && twitchValueRoot.isObject()) {
@@ -275,6 +276,7 @@ JsonValue ParseJsonFromRequest(string json) {
 			return twitchValueRoot["data"];
 		}
 	}
+	HostPrintUTF8("#### </ParseJsonFromRequest> ####");
 	return twitchValueRoot;
 }
 
