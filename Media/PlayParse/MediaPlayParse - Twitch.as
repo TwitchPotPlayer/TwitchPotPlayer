@@ -16,7 +16,8 @@
 // 	bool PlaylistCheck(const string &in)				-> check playlist
 //	array<dictionary> PlaylistParse(const string &in)	-> parse playlist
 
-bool debug = false;
+bool debug = false; /// open console to view debug output
+bool showSensitiveInfo = false; /// Output info containing your tokens and secrets
 bool verbose = false;
 
 /// END OF USER VARIABLES
