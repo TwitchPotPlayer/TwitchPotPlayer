@@ -462,7 +462,7 @@ int GetITag(const string &in qualityName) {
 }
 
 bool PlayitemCheck(const string &in path) {
-	HostPrintUTF8("#### <PlayItemCheck> ####")
+	HostPrintUTF8("#### <PlayItemCheck> ####");
 	bool value = HostRegExpParse(path, "twitch.tv/" + getReg()) != "";
 	string debug_msg = ""
 	+ "## value: " + ConvertBooleanToString(value) + "\n"
