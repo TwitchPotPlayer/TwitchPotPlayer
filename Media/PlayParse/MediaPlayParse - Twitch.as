@@ -426,11 +426,24 @@ JsonValue VodTokenRequest(string vodId) {
 }
 
 string GetGameFromId(string id) {
+	string debug_msg = ""
+	+ "#### <GetGameFromId> ####\n"
+	+ "Getting game data...";
+	HostPrintUTF8(debug_msg);
 	JsonValue game = SendTwitchAPIRequest(ApiBase + "/helix/games?id=" + id);
-	if (game.isArray()) {
-		return " | " + game[0]["name"].asString();
+	string value = "";
+	bool gameIsArray = game.isArray();
+
+	if (gameIsArray) {
+		value = " | " + game[0]["name"].asString();
 	}
-	return "";
+
+	/// DEBUG OUTPUT
+	debug_msg = ""
+	+ "## gameIsArray: " + ConvertBooleanToString(gameIsArray) + "\n"
+	+ "#### </GetGameFromId> ####";
+	HostPrintUTF8(debug_msg);
+	return value;
 }
 
 int GetITag(const string &in qualityName) {
