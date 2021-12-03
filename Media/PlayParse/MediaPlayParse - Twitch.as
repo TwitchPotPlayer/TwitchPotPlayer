@@ -178,35 +178,38 @@ string GetAppAccessToken() {
 }
 
 string DebugConfig() {
-	string debugInfo = "";
+	string debug_msg = "#### <DebugConfig> ####\n";
 
-	if (debug) {
-		string _auth = Authorization;
-		if (Authorization == "") {
-			_auth = "none";
-		}
+	/// DEBUG OUTPUT
+	string debug_clientID = (showSensitiveInfo) ? ConfigData.clientID : "(hidden)";
+	string debug_clientID_M3U8 = (showSensitiveInfo) ? ConfigData.clientID_M3U8 : "(hidden)";
+	string debug_clientSecret = (showSensitiveInfo) ? ConfigData.clientSecret : "(hidden)";
+	string debug_oauthToken = (showSensitiveInfo) ? ConfigData.oauthToken : "(hidden)";
+	string debug_auth = (showSensitiveInfo) ? Authorization : "(hidden)";
 
-		if (verbose) {
-			debugInfo +=
-			"ConfigData.fullConfig       :\n" + ConfigData.fullConfig + '\n';
-		}
-
-		debugInfo +=
-		"ConfigData.clientID         : " + ConfigData.clientID + '\n' +
-		"ConfigData.clientID_M3U8    : " + ConfigData.clientID_M3U8 + '\n' +
-		"ConfigData.clientSecret     : " + ConfigData.clientSecret + '\n' +
-		"ConfigData.oauthToken       : " + ConfigData.oauthToken + '\n' +
-		"ConfigData.showBitrate      : " + ConfigData.showBitrate + '\n' +
-		"ConfigData.showFPS          : " + ConfigData.showFPS + '\n' +
-		"ConfigData.gameInTitle      : " + ConfigData.gameInTitle + '\n' +
-		"ConfigData.gameInContent    : " + ConfigData.gameInContent + '\n' +
-		"ConfigData.useOwnCredentials: " + ConfigData.useOwnCredentials + '\n' +
-		"Authorization: " + _auth;
-
-		HostPrintUTF8(debugInfo);
+	if (verbose && showSensitiveInfo) {
+		debug_msg += ""
+		+ "## ConfigData.fullConfig:\n"
+		+ ConfigData.fullConfig + '\n';
 	}
 
-	return debugInfo;
+	debug_msg += ""
+	+ "## ConfigData.clientID         : " + debug_clientID + '\n'
+	+ "## ConfigData.clientID_M3U8    : " + debug_clientID_M3U8 + '\n'
+	+ "## ConfigData.clientSecret     : " + debug_clientSecret + '\n'
+	+ "## ConfigData.oauthToken       : " + debug_oauthToken + '\n'
+	+ "## ConfigData.showBitrate      : " + ConfigData.showBitrate + '\n'
+	+ "## ConfigData.showFPS          : " + ConfigData.showFPS + '\n'
+	+ "## ConfigData.gameInTitle      : " + ConfigData.gameInTitle + '\n'
+	+ "## ConfigData.gameInContent    : " + ConfigData.gameInContent + '\n'
+	+ "## ConfigData.useOwnCredentials: " + ConfigData.useOwnCredentials + '\n'
+	+ "## Authorization: " + debug_auth + "\n"
+	+ "## IsTwitch: " + IsTwitch + "\n"
+	+ "#### </DebugConfig> ####";
+
+	HostPrintUTF8(debug_msg);
+
+	return debug_msg;
 }
 
 bool ConsoleOpened = OpenConsole();
