@@ -435,6 +435,7 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList) {
 	HostPrintUTF8("#### <PlayItemParse> ####");
 	string value = "";
+	string debug_msg = "";
 
 	// Any twitch API demands client id in header.
 	string headerClientId = "Client-ID: " + ConfigData.clientID_M3U8;
@@ -447,7 +448,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	bool isClip = (pathContainsClipsSubdomain || pathContainsClipSubdirectory);
 	if (isClip) {
 		/// DEBUG OUTPUT
-		string debug_msg = ""
+		debug_msg = ""
 		+ "## headerClientId: " + debug_headerClientId + "\n"
 		+ "## isVod: " + ConvertBooleanToString(isVod);
 		HostPrintUTF8(debug_msg);
@@ -482,14 +483,15 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	+ "supported_codecs=avc1";
 	// &sig={token_sig}&token={token}
 
-	string debug_msg = ""
-	+ "## vodId: " + vodId + "\n"
+	/// DEBUG OUTPUT
+	debug_msg = ""
+	+ "## headerClientId: " + debug_headerClientId + "\n"
+	+ "## isVod: " + ConvertBooleanToString(isVod) + "\n"
 	+ "## m3u8Api: " + m3u8Api + "\n"
 	+ "## ApiBase: " + ApiBase + "\n"
-	+ "## isVod: " + isVod + "\n"
 	+ "## nickname: " + nickname + "\n"
 	+ "## vodId: " + vodId + "\n"
-	+ "## urlSuffix: " + (!isVod ? "/helix/streams?user_login=" + nickname : "/kraken/videos/v" + vodId)
+	+ "## urlSuffix: " + (!isVod ? "/helix/streams?user_login=" + nickname : "/kraken/videos/v" + vodId) + "\n"
 	+ "## Getting stream information via SendTwitchAPIRequest...";
 	HostPrintUTF8(debug_msg);
 
