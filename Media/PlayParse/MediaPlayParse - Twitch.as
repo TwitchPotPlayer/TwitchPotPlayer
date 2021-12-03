@@ -286,16 +286,21 @@ JsonValue SendTwitchAPIRequest(string request) {
 	}
 	string json = HostUrlGetString(request, "", header);
 
-	if (debug) {
-		string _s = "#### <SendTwitchAPIRequest> ####" + "\n"
-		+ "request:\n{{\n" + request + "\n}}\n"
-		+ "v5: " + v5 + "\n"
-		+ "helix: " + helix + "\n"
-		+ "header:\n{{\n" + header + "\n}}\n"
-		+ "json: " + json + "\n"
-		+ "#### </SendTwitchAPIRequest> ####";
-		HostPrintUTF8(_s);
-	}
+	/// DEBUG OUTPUT
+	string debug_helix = helix;
+	if (!showSensitiveInfo) debug_helix.replace(Authorization, "(hidden)");
+	string debug_header = "Client-ID: " + ConfigData.clientID + v5 + debug_helix;
+	if (!showSensitiveInfo) debug_header.replace(ConfigData.clientID, "(hidden)");
+	string debug_json = json; /// TODO: check for sensitive info
+	string debug_msg = ""
+	+ "#### <SendTwitchAPIRequest> ####\n"
+	+ "## request: " + request + "\n"
+	+ "## v5: (next line)" + v5 + "\n"
+	+ "## helix: (next line)" + debug_helix + "\n"
+	+ "## header: (next line)\n" + debug_header + "\n"
+	+ "## json: " + debug_json + "\n"
+	+ "#### </SendTwitchAPIRequest> ####";
+	HostPrintUTF8(debug_msg);
 
 	return ParseJsonFromRequest(json);
 }
