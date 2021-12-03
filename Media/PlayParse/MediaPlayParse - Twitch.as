@@ -3,9 +3,11 @@
 	Copyright github.com/23rd, 2018-2020.
 */
 
+//  bool OpenConsole()									-> if debug is true, HostOpenConsole()
 //	string GetTitle() 									-> get title for UI
 //	string GetVersion									-> get version for manage
 //	string GetDesc()									-> get detail information
+//	string ConvertBooleanToString(bool value)			-> convert a boolean to either "true" or "false"
 //	string GetLoginTitle()								-> get title for login dialog
 //	string GetLoginDesc()								-> get desc for login dialog
 //	string ServerCheck(string User, string Pass) 		-> server check
