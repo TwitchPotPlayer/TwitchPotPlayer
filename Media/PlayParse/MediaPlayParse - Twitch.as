@@ -439,6 +439,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	// Any twitch API demands client id in header.
 	string headerClientId = "Client-ID: " + ConfigData.clientID_M3U8;
 	string debug_headerClientId = headerClientId;
+	if (!showSensitiveInfo) debug_headerClientId.replace(ConfigData.clientID_M3U8, "(hidden)");
 
 	bool isVod = path.find("twitch.tv/videos/") > 0;
 	bool pathContainsClipsSubdomain = path.find("clips.twitch.tv") >= 0;
