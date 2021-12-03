@@ -434,14 +434,16 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList) {
 	HostPrintUTF8("#### <PlayItemParse> ####");
+	string value = "";
 
 	// Any twitch API demands client id in header.
 	string headerClientId = "Client-ID: " + ConfigData.clientID_M3U8;
+	string debug_headerClientId = headerClientId;
 
 	bool isVod = path.find("twitch.tv/videos/") > 0;
-	if (path.find("clips.twitch.tv") >= 0 ||
-		HostRegExpParse(path, "/clip/" + getReg()).length() > 0) {
-		return ClipsParse(path, MetaData, QualityList, headerClientId);
+	bool pathContainsClipsSubdomain = path.find("clips.twitch.tv") >= 0;
+	bool pathContainsClipSubdirectory = HostRegExpParse(path, "/clip/" + getReg()).length() > 0;
+	bool isClip = (pathContainsClipsSubdomain || pathContainsClipSubdirectory);
 	}
 
 	string nickname = HostRegExpParse(path, "twitch.tv/" + getReg());
