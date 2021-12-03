@@ -321,8 +321,25 @@ JsonValue SendGraphQLRequest(string request) {
 		"",
 		headers,
 		request);
-	HostPrintUTF8("JSON");
-	HostPrintUTF8(json);
+
+	/// DEBUG OUTPUT
+	string debug_oauth = oauth;
+	string debug_headers = headers;
+	string debug_json = json; /// TODO: check for sensitive info
+	if (!showSensitiveInfo) {
+		debug_oauth = "(hidden)";
+		debug_headers.replace(ConfigData.clientID_M3U8, "(hidden)");
+		debug_headers.replace(oauth, "(hidden)");
+	}
+	string debug_msg = ""
+	+ "#### <SendGraphQLRequest> ####" + "\n"
+	+ "## request:\n" + request + "\n"
+	+ "## oauth: " + debug_oauth + "\n"
+	+ "## header:\n" + debug_headers + "\n"
+	+ "## json: " + debug_json + "\n"
+	+ "#### </SendGraphQLRequest ####";
+	HostPrintUTF8(debug_msg);
+
 	return ParseJsonFromRequest(json)["data"];
 }
 
