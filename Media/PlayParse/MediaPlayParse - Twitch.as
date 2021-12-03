@@ -461,7 +461,13 @@ int GetITag(const string &in qualityName) {
 }
 
 bool PlayitemCheck(const string &in path) {
-	return HostRegExpParse(path, "twitch.tv/" + getReg()) != "";
+	HostPrintUTF8("#### <PlayItemCheck> ####")
+	bool value = HostRegExpParse(path, "twitch.tv/" + getReg()) != "";
+	string debug_msg = ""
+	+ "## value: " + ConvertBooleanToString(value) + "\n"
+	+ "#### </PlayItemCheck> ####";
+	HostPrintUTF8(debug_msg);
+	return value;
 }
 
 string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList, const string &in headerClientId) {
