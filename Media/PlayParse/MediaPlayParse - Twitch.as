@@ -133,12 +133,27 @@ Config ReadConfigFile() {
 }
 
 string GetAppAccessToken() {
+	HostPrintUTF8("#### <GetAppAccessToken> ####");
+	string debug_msg = "";
+	/// TODO: string value = "";
+
 	if (!ConfigData.useOwnCredentials) {
 		ConfigData.clientID = "g5zg0400k4vhrx2g6xi4hgveruamlv";
+
+		debug_msg = ""
+		+ "## useOwnCredentials is False. Default to and return value of default clientId starting with 65zg0400.\n" // todo: truncate value of clientID
+		+ "#### </GetAppAccessToken> ####";
+		HostPrintUTF8(debug_msg);
+
 		return "6jftlp4naa4e7esxe3favcmjfno2qw";
 	}
 
 	if (ConfigData.clientID == "" || ConfigData.clientSecret == "") {
+		debug_msg = ""
+		+ "## clientID or clientSecret are null. Return null value.\n"
+		+ "#### </GetAppAccessToken> ####";
+		HostPrintUTF8(debug_msg);
+
 		return "";
 	}
 
@@ -147,33 +162,55 @@ string GetAppAccessToken() {
 	postData += '"client_id":"' + ConfigData.clientID + '",';
 	postData += '"client_secret":"' + ConfigData.clientSecret + '"}';
 
-	if (debug) HostPrintUTF8("Getting Authorization token...");
-
+	HostPrintUTF8("Getting Authorization token...");
 	string json = HostUrlGetString(
 		uri,
 		"",
 		"Content-Type: application/json",
 		postData);
 
-	if (debug) HostPrintUTF8("Raw response: \n" + json);
+	/// DEBUG OUTPUT
+	string debug_postData = postData;
+	string debug_json = json;
+	if (!showSensitiveInfo) {
+		debug_postData.replace(ConfigData.clientID, "(hidden)");
+		debug_postData.replace(ConfigData.clientSecret, "(hidden)");
+		debug_json = "(hidden)"; /// json value is parsed later
+	}
+	debug_msg = ""
+	+ "## uri: " + uri + "\n"
+	+ "## postData:\n" + debug_postData + "\n"
+	+ "## json: " + debug_json + "\n";
+	HostPrintUTF8(debug_msg);
+
 
 	if (json == "")
 	{
-		string msg = "Authorization Error. No response from " + uri;
-		HostPrintUTF8(msg);
-		// throw new Exception(msg);
+		debug_msg = "## Authorization Error. No response from " + uri;
+		HostPrintUTF8(debug_msg);
+		// throw new Exception(debug_msg);
 		// catch exception and show in message box.
 		// Somehow shove the message into the "pins" that PotPlayer suggests investigating.
 	}
 
-
 	JsonReader twitchJsonReader;
 	JsonValue twitchValueRoot;
+	bool twitchJsonIsValid = twitchJsonReader.parse(json, twitchValueRoot);
+	bool twitchValueRootIsObject = twitchValueRoot.isObject();
+	debug_msg = ""
+	+ "## twitchJsonIsValid: " + ConvertBooleanToString(twitchJsonIsValid) + "\n"
+	+ "## twitchValueRootIsObject: " + ConvertBooleanToString(twitchValueRootIsObject) + "\n";
 
-	if (twitchJsonReader.parse(json, twitchValueRoot) &&
-		twitchValueRoot.isObject()) {
-		return twitchValueRoot["access_token"].asString();
+	if (twitchJsonIsValid && twitchValueRootIsObject) {
+		string access_token = twitchValueRoot["access_token"].asString();
+		string debug_access_token = access_token;
+		if (!showSensitiveInfo) debug_access_token = "(hidden)";
+		debug_msg += "## access_token: " + debug_access_token + "\n";
+		HostPrintUTF8(debug_msg + "#### </GetAppAccessToken> ####");
+		return access_token;
 	}
+
+	HostPrintUTF8(debug_msg + "#### </GetAppAccessToken> ####");
 	return "";
 }
 
