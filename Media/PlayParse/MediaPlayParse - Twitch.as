@@ -394,6 +394,14 @@ string PlaybackTokenBodyRequest(string function, string firstParameter) {
 	s += '    }"';
 	s += '}';
 
+	/// DEBUG OUTPUT
+	string debug_msg = ""
+	+ "#### <PlaybackTokenBodyRequest> ####\n"
+	+ "## s:\n" + s + "\n"
+	+ "#### </PlaybackTokenBodyRequest> ####";
+	HostPrintUTF8(debug_msg);
+
+
 	return s;
 }
 
