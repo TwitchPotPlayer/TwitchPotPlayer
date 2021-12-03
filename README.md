@@ -27,15 +27,9 @@ If you do not trust proxy, you can enter your credentials to the `config.ini`.
 
 ##### ./Media/PlayParse/MediaPlayParse - Twitch.as
 See [Media/PlayParse/config.ini](https://github.com/TwitchPotPlayer/TwitchPotPlayer/blob/master/Media/PlayParse/config.ini).
-Code references:
-- [class Config](https://github.com/TwitchPotPlayer/TwitchPotPlayer/blob/master/Media/PlayParse/MediaPlayParse%20-%20Twitch.as#L81-L100)
-- [Config ReadConfigFile()](https://github.com/TwitchPotPlayer/TwitchPotPlayer/blob/master/Media/PlayParse/MediaPlayParse%20-%20Twitch.as#L106-L127)
 
 ##### ./Media/UrlList/MediaUrlList - Twitch.as
 See [Media/UrlList/config.ini](https://github.com/TwitchPotPlayer/TwitchPotPlayer/blob/master/Media/UrlList/config.ini).
-Code references:
-- [class Config](https://github.com/TwitchPotPlayer/TwitchPotPlayer/blob/master/Media/UrlList/MediaUrlList%20-%20Twitch.as#L74-L88)
-- [Config ReadConfigFile()](https://github.com/TwitchPotPlayer/TwitchPotPlayer/blob/master/Media/UrlList/MediaUrlList%20-%20Twitch.as#L90-L100)
 
 # Installation
 - Just download this repository.
