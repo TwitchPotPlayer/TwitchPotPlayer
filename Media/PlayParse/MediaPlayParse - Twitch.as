@@ -223,10 +223,14 @@ JsonValue ParseJsonFromRequest(string json) {
 	JsonValue twitchValueRoot;
 	if (twitchJsonReader.parse(json, twitchValueRoot) && twitchValueRoot.isObject()) {
 		if (twitchValueRoot["data"].isArray()) {
-			if (debug) {
-				string _json = twitchValueRoot["data"].asString();
-				HostPrintUTF8("#### <ParseJsonFromRequest>\ndata: "+ _json + "\n#### </ParseJsonFromRequest> ####");
-			}
+			/// DEBUG OUTPUT
+			string debug_json = twitchValueRoot["data"].asString(); /// TODO: check for sensitive info
+			string debug_msg = ""
+			+ "#### <ParseJsonFromRequest>\n"
+			+ "## data: " + debug_json + "\n"
+			+ "#### </ParseJsonFromRequest> ####";
+			HostPrintUTF8(debug_msg);
+
 			return twitchValueRoot["data"];
 		}
 	}
