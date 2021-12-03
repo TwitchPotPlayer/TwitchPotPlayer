@@ -50,7 +50,6 @@ string getApiBase() {
 	return "https://api.twitch.tv";
 }
 
-// TODO: overload the Boolean type with toString() method. Currently impossible.
 string ConvertBooleanToString(bool value) {
 	return value ? "true" : "false";
 }

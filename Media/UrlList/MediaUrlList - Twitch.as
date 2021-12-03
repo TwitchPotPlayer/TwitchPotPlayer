@@ -72,6 +72,10 @@ string getApi() {
 	return "https://api.twitch.tv/helix/";
 }
 
+string ConvertBooleanToString(bool value) {
+	return value ? "true" : "false";
+}
+
 class Config {
 	string fullConfig;
 	string clientID;
