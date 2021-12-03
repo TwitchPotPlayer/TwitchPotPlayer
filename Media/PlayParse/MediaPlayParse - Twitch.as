@@ -51,7 +51,7 @@ string getApiBase() {
 }
 
 // TODO: overload the Boolean type with toString() method. Currently impossible.
-string convertBooleanToString(bool value) {
+string ConvertBooleanToString(bool value) {
 	return value ? "true" : "false";
 }
 
@@ -527,9 +527,10 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		}
 	}
 
+	/// DEBUG OUTPUT
 	debug_msg = ""
-	+ "## streamIsArray: " + convertBooleanToString(streamIsArray) + "\n"
-	+ "## streamIsLegacyVod: " + convertBooleanToString(streamIsLegacyVod) + "\n"
+	+ "## streamIsArray: " + ConvertBooleanToString(streamIsArray) + "\n"
+	+ "## streamIsLegacyVod: " + ConvertBooleanToString(streamIsLegacyVod) + "\n"
 	+ "## stream: " + stream.asString() + "\n"
 	+ "## titleStream: " + titleStream + "\n"
 	+ "## displayName: " + displayName + "\n"
@@ -547,6 +548,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	string sig = "&sig=" + weirdToken["signature"].asString();
 	string token = "&token=" + HostUrlEncode(weirdToken["value"].asString());
 
+	/// DEBUG OUTPUT
 	debug_msg = ""
 	+ "## tokenRequestResponse: " + weirdToken.asString() + "\n"
 	+ "## tokenType: " + (isVod ? "VodToken" : "LiveToken") + "\n"
@@ -599,6 +601,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	MetaData["viewCount"] = views;
 	MetaData["author"] = displayName;
 
+	/// DEBUG OUTPUT
 	debug_msg = ""
 	+ "## jsonM3u8: " + jsonM3u8 + "\n"
 	+ "## sourceQualityUrl: " + sourceQualityUrl + "\n"
