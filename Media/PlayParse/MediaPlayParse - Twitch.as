@@ -596,7 +596,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		// Helix API can't give to us game_id from video_id.
 		//: "videos?id=" + vodId));
 	bool streamIsArray = stream.isArray();
-	bool streamIsLegacyVod = ( !stream.isArray() && stream.isObject());
+	bool streamIsLegacyVod = (!stream.isArray() && stream.isObject());
 	string titleStream;
 	string displayName;
 	string views = "";
