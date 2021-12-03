@@ -417,9 +417,12 @@ JsonValue LiveTokenRequest(string nickname) {
 
 JsonValue VodTokenRequest(string vodId) {
 	string function = "videoPlaybackAccessToken";
-	return SendGraphQLRequest(PlaybackTokenBodyRequest(
+	HostPrintUTF8("#### <VodTokenRequest> ####");
+	JsonValue value = SendGraphQLRequest(PlaybackTokenBodyRequest(
 		function,
 		'id: \\"' + vodId + '\\"'))[function];
+	HostPrintUTF8("#### </VodTokenRequest> ####");
+	return value;
 }
 
 string GetGameFromId(string id) {
