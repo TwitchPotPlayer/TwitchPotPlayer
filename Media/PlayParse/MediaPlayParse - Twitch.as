@@ -624,7 +624,6 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	debug_msg = ""
 	+ "## streamIsArray: " + ConvertBooleanToString(streamIsArray) + "\n"
 	+ "## streamIsLegacyVod: " + ConvertBooleanToString(streamIsLegacyVod) + "\n"
-	+ "## stream: " + stream.asString() + "\n"
 	+ "## titleStream: " + titleStream + "\n"
 	+ "## displayName: " + displayName + "\n"
 	+ "## views: " + views + "\n"
@@ -643,7 +642,6 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 
 	/// DEBUG OUTPUT
 	debug_msg = ""
-	+ "## tokenRequestResponse: " + weirdToken.asString() + "\n"
 	+ "## tokenType: " + (isVod ? "VodToken" : "LiveToken") + "\n"
 	+ "## sig: " + sig + "\n"
 	+ "## token: " + token + "\n"
