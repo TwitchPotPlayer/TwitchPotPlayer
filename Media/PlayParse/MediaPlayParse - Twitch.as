@@ -1,11 +1,13 @@
-﻿/*
+/*
 	This is the source code of Twitch media parse extension.
 	Copyright github.com/23rd, 2018-2020.
 */
 
+//  bool OpenConsole()									-> if debug is true, HostOpenConsole()
 //	string GetTitle() 									-> get title for UI
 //	string GetVersion									-> get version for manage
 //	string GetDesc()									-> get detail information
+//	string ConvertBooleanToString(bool value)			-> convert a boolean to either "true" or "false"
 //	string GetLoginTitle()								-> get title for login dialog
 //	string GetLoginDesc()								-> get desc for login dialog
 //	string ServerCheck(string User, string Pass) 		-> server check
@@ -16,12 +18,23 @@
 // 	bool PlaylistCheck(const string &in)				-> check playlist
 //	array<dictionary> PlaylistParse(const string &in)	-> parse playlist
 
+bool debug = false; /// open console to view debug output
+bool showSensitiveInfo = false; /// Output info containing your tokens and secrets
+bool verbose = false;
+
+/// END OF USER VARIABLES
+
+bool OpenConsole() {
+	if (debug) HostOpenConsole();
+	return debug;
+}
+
 string GetTitle() {
 	return "Twitch";
 }
 
 string GetVersion() {
-	return "1.4";
+	return "1.4.0";
 }
 
 string GetDesc() {
@@ -37,6 +50,10 @@ string getApiBase() {
 		return "https://potplayer.herokuapp.com";
 	}
 	return "https://api.twitch.tv";
+}
+
+string ConvertBooleanToString(bool value) {
+	return value ? "true" : "false";
 }
 
 class QualityListItem {
@@ -87,7 +104,6 @@ class Config {
 	string parse(string s) {
 		return HostRegExpParse(fullConfig, s + getReg());
 	}
-
 };
 
 string audioOnlyRaw = "audio_only";
@@ -96,7 +112,8 @@ string audioOnlyGood = "— Audio Only";
 
 Config ReadConfigFile() {
 	Config config;
-	config.fullConfig = HostFileRead(HostFileOpen("Extension\\Media\\PlayParse\\config.ini"), 500);
+	string path = "Extension\\Media\\PlayParse\\config.ini";
+	config.fullConfig = HostFileRead(HostFileOpen(path), 500);
 	config.showBitrate = config.isTrue("showBitrate");
 	config.showFPS = config.isTrue("showFPS");
 	config.gameInTitle = config.isTrue("gameInTitle");
@@ -107,51 +124,157 @@ Config ReadConfigFile() {
 	config.useOwnCredentials = config.isTrue("useOwnCredentials");
 	// This ClientID is used only for getting the m3u8 playlist.
 	config.clientID_M3U8 = "jzkbprff40iqj646a697cyrvl0zt2m6";
+
+	if (config.clientID != "" && config.useOwnCredentials == true)
+	{
+		config.clientID_M3U8 = config.clientID;
+	}
+
 	return config;
 }
 
 string GetAppAccessToken() {
+	HostPrintUTF8("#### <GetAppAccessToken> ####");
+	string debug_msg = "";
+	/// TODO: string value = "";
+
 	if (!ConfigData.useOwnCredentials) {
 		ConfigData.clientID = "g5zg0400k4vhrx2g6xi4hgveruamlv";
+
+		debug_msg = ""
+		+ "## useOwnCredentials is False. Default to and return value of default clientId starting with 65zg0400.\n" // todo: truncate value of clientID
+		+ "#### </GetAppAccessToken> ####";
+		HostPrintUTF8(debug_msg);
+
 		return "6jftlp4naa4e7esxe3favcmjfno2qw";
 	}
+
 	if (ConfigData.clientID == "" || ConfigData.clientSecret == "") {
+		debug_msg = ""
+		+ "## clientID or clientSecret are null. Return null value.\n"
+		+ "#### </GetAppAccessToken> ####";
+		HostPrintUTF8(debug_msg);
+
 		return "";
 	}
+
+	string uri = "https://id.twitch.tv/oauth2/token";
 	string postData = '{"grant_type":"client_credentials",';
 	postData += '"client_id":"' + ConfigData.clientID + '",';
 	postData += '"client_secret":"' + ConfigData.clientSecret + '"}';
 
+	HostPrintUTF8("Getting Authorization token...");
 	string json = HostUrlGetString(
-		"https://id.twitch.tv/oauth2/token",
+		uri,
 		"",
 		"Content-Type: application/json",
 		postData);
 
+	/// DEBUG OUTPUT
+	string debug_postData = postData;
+	string debug_json = json;
+	if (!showSensitiveInfo) {
+		debug_postData.replace(ConfigData.clientID, "(hidden)");
+		debug_postData.replace(ConfigData.clientSecret, "(hidden)");
+		debug_json = "(hidden)"; /// json value is parsed later
+	}
+	debug_msg = ""
+	+ "## uri: " + uri + "\n"
+	+ "## postData:\n" + debug_postData + "\n"
+	+ "## json: " + debug_json + "\n";
+	HostPrintUTF8(debug_msg);
+
+
+	if (json == "")
+	{
+		debug_msg = "## Authorization Error. No response from " + uri;
+		HostPrintUTF8(debug_msg);
+		// throw new Exception(debug_msg);
+		// catch exception and show in message box.
+		// Somehow shove the message into the "pins" that PotPlayer suggests investigating.
+	}
+
 	JsonReader twitchJsonReader;
 	JsonValue twitchValueRoot;
+	bool twitchJsonIsValid = twitchJsonReader.parse(json, twitchValueRoot);
+	bool twitchValueRootIsObject = twitchValueRoot.isObject();
+	debug_msg = ""
+	+ "## twitchJsonIsValid: " + ConvertBooleanToString(twitchJsonIsValid) + "\n"
+	+ "## twitchValueRootIsObject: " + ConvertBooleanToString(twitchValueRootIsObject) + "\n";
 
-	if (twitchJsonReader.parse(json, twitchValueRoot) &&
-		twitchValueRoot.isObject()) {
-		return twitchValueRoot["access_token"].asString();
+	if (twitchJsonIsValid && twitchValueRootIsObject) {
+		string access_token = twitchValueRoot["access_token"].asString();
+		string debug_access_token = access_token;
+		if (!showSensitiveInfo) debug_access_token = "(hidden)";
+		debug_msg += "## access_token: " + debug_access_token + "\n";
+		HostPrintUTF8(debug_msg + "#### </GetAppAccessToken> ####");
+		return access_token;
 	}
+
+	HostPrintUTF8(debug_msg + "#### </GetAppAccessToken> ####");
 	return "";
 }
+
+string DebugConfig() {
+	string debug_msg = "#### <DebugConfig> ####\n";
+
+	/// DEBUG OUTPUT
+	string debug_clientID = (showSensitiveInfo) ? ConfigData.clientID : "(hidden)";
+	string debug_clientID_M3U8 = (showSensitiveInfo) ? ConfigData.clientID_M3U8 : "(hidden)";
+	string debug_clientSecret = (showSensitiveInfo) ? ConfigData.clientSecret : "(hidden)";
+	string debug_oauthToken = (showSensitiveInfo) ? ConfigData.oauthToken : "(hidden)";
+	string debug_auth = (showSensitiveInfo) ? Authorization : "(hidden)";
+
+	if (verbose && showSensitiveInfo) {
+		debug_msg += ""
+		+ "## ConfigData.fullConfig:\n"
+		+ ConfigData.fullConfig + '\n';
+	}
+
+	debug_msg += ""
+	+ "## ConfigData.clientID         : " + debug_clientID + '\n'
+	+ "## ConfigData.clientID_M3U8    : " + debug_clientID_M3U8 + '\n'
+	+ "## ConfigData.clientSecret     : " + debug_clientSecret + '\n'
+	+ "## ConfigData.oauthToken       : " + debug_oauthToken + '\n'
+	+ "## ConfigData.showBitrate      : " + ConfigData.showBitrate + '\n'
+	+ "## ConfigData.showFPS          : " + ConfigData.showFPS + '\n'
+	+ "## ConfigData.gameInTitle      : " + ConfigData.gameInTitle + '\n'
+	+ "## ConfigData.gameInContent    : " + ConfigData.gameInContent + '\n'
+	+ "## ConfigData.useOwnCredentials: " + ConfigData.useOwnCredentials + '\n'
+	+ "## Authorization: " + debug_auth + "\n"
+	+ "## IsTwitch: " + IsTwitch + "\n"
+	+ "#### </DebugConfig> ####";
+
+	HostPrintUTF8(debug_msg);
+
+	return debug_msg;
+}
+
+bool ConsoleOpened = OpenConsole();
 
 Config ConfigData = ReadConfigFile();
 string Authorization = GetAppAccessToken();
 bool IsTwitch = (Authorization != "");
 string ApiBase = getApiBase();
 
+string _debugConfig = DebugConfig();
+
 JsonValue ParseJsonFromRequest(string json) {
+	HostPrintUTF8 ("#### <ParseJsonFromRequest> ####");
 	JsonReader twitchJsonReader;
 	JsonValue twitchValueRoot;
-
 	if (twitchJsonReader.parse(json, twitchValueRoot) && twitchValueRoot.isObject()) {
 		if (twitchValueRoot["data"].isArray()) {
+			/// DEBUG OUTPUT
+			string debug_msg = ""
+			+ "## isArray: " + twitchValueRoot["data"].isArray() + "\n"
+			+ "## size: " + twitchValueRoot["data"].getKeys().size() + "\n";
+			HostPrintUTF8(debug_msg + "#### </ParseJsonFromRequest> ####");
+
 			return twitchValueRoot["data"];
 		}
 	}
+	HostPrintUTF8("#### </ParseJsonFromRequest> ####");
 	return twitchValueRoot;
 }
 
@@ -163,6 +286,23 @@ JsonValue SendTwitchAPIRequest(string request) {
 		header = "";
 	}
 	string json = HostUrlGetString(request, "", header);
+
+	/// DEBUG OUTPUT
+	string debug_helix = helix;
+	if (!showSensitiveInfo) debug_helix.replace(Authorization, "(hidden)");
+	string debug_header = "Client-ID: " + ConfigData.clientID + v5 + debug_helix;
+	if (!showSensitiveInfo) debug_header.replace(ConfigData.clientID, "(hidden)");
+	string debug_json = json; /// TODO: check for sensitive info
+	string debug_msg = ""
+	+ "#### <SendTwitchAPIRequest> ####\n"
+	+ "## request: " + request + "\n"
+	+ "## v5: (next line)" + v5 + "\n"
+	+ "## helix: (next line)" + debug_helix + "\n"
+	+ "## header: (next line)\n" + debug_header + "\n"
+	+ "## json: " + debug_json + "\n"
+	+ "#### </SendTwitchAPIRequest> ####";
+	HostPrintUTF8(debug_msg);
+
 	return ParseJsonFromRequest(json);
 }
 
@@ -182,8 +322,25 @@ JsonValue SendGraphQLRequest(string request) {
 		"",
 		headers,
 		request);
-	HostPrintUTF8("JSON");
-	HostPrintUTF8(json);
+
+	/// DEBUG OUTPUT
+	string debug_oauth = oauth;
+	string debug_headers = headers;
+	string debug_json = json; /// TODO: check for sensitive info
+	if (!showSensitiveInfo) {
+		debug_oauth = "(hidden)";
+		debug_headers.replace(ConfigData.clientID_M3U8, "(hidden)");
+		debug_headers.replace(oauth, "(hidden)");
+	}
+	string debug_msg = ""
+	+ "#### <SendGraphQLRequest> ####" + "\n"
+	+ "## request:\n" + request + "\n"
+	+ "## oauth: " + debug_oauth + "\n"
+	+ "## header:\n" + debug_headers + "\n"
+	+ "## json: " + debug_json + "\n"
+	+ "#### </SendGraphQLRequest ####";
+	HostPrintUTF8(debug_msg);
+
 	return ParseJsonFromRequest(json)["data"];
 }
 
@@ -238,29 +395,56 @@ string PlaybackTokenBodyRequest(string function, string firstParameter) {
 	s += '    }"';
 	s += '}';
 
+	/// DEBUG OUTPUT
+	string debug_msg = ""
+	+ "#### <PlaybackTokenBodyRequest> ####\n"
+	+ "## s:\n" + s + "\n"
+	+ "#### </PlaybackTokenBodyRequest> ####";
+	HostPrintUTF8(debug_msg);
+
+
 	return s;
 }
 
 JsonValue LiveTokenRequest(string nickname) {
 	string function = "streamPlaybackAccessToken";
-	return SendGraphQLRequest(PlaybackTokenBodyRequest(
+	HostPrintUTF8("#### <LiveTokenRequest> ####");
+	JsonValue value = SendGraphQLRequest(PlaybackTokenBodyRequest(
 		function,
 		'channelName: \\"' + nickname + '\\"'))[function];
+	HostPrintUTF8("#### </LiveTokenRequest> ####");
+	return value;
 }
 
 JsonValue VodTokenRequest(string vodId) {
 	string function = "videoPlaybackAccessToken";
-	return SendGraphQLRequest(PlaybackTokenBodyRequest(
+	HostPrintUTF8("#### <VodTokenRequest> ####");
+	JsonValue value = SendGraphQLRequest(PlaybackTokenBodyRequest(
 		function,
 		'id: \\"' + vodId + '\\"'))[function];
+	HostPrintUTF8("#### </VodTokenRequest> ####");
+	return value;
 }
 
 string GetGameFromId(string id) {
+	string debug_msg = ""
+	+ "#### <GetGameFromId> ####\n"
+	+ "Getting game data...";
+	HostPrintUTF8(debug_msg);
 	JsonValue game = SendTwitchAPIRequest(ApiBase + "/helix/games?id=" + id);
-	if (game.isArray()) {
-		return " | " + game[0]["name"].asString();
+	string value = "";
+	bool gameIsArray = game.isArray();
+
+	if (gameIsArray) {
+		value = " | " + game[0]["name"].asString();
 	}
-	return "";
+
+	/// DEBUG OUTPUT
+	debug_msg = ""
+	+ "## gameIsArray: " + ConvertBooleanToString(gameIsArray) + "\n"
+	+ "#### </GetGameFromId> ####";
+	HostPrintUTF8(debug_msg);
+	return value;
 }
 
 int GetITag(const string &in qualityName) {
@@ -278,7 +462,13 @@ int GetITag(const string &in qualityName) {
 }
 
 bool PlayitemCheck(const string &in path) {
-	return HostRegExpParse(path, "twitch.tv/" + getReg()) != "";
+	HostPrintUTF8("#### <PlayItemCheck> ####");
+	bool value = HostRegExpParse(path, "twitch.tv/" + getReg()) != "";
+	string debug_msg = ""
+	+ "## value: " + ConvertBooleanToString(value) + "\n"
+	+ "#### </PlayItemCheck> ####";
+	HostPrintUTF8(debug_msg);
+	return value;
 }
 
 string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList, const string &in headerClientId) {
@@ -336,15 +526,30 @@ string ClipsParse(const string &in path, dictionary &MetaData, array<dictionary>
 }
 
 string PlayitemParse(const string &in path, dictionary &MetaData, array<dictionary> &QualityList) {
-	// HostOpenConsole();
+	HostPrintUTF8("#### <PlayItemParse> ####");
+	string value = "";
+	string debug_msg = "";
 
 	// Any twitch API demands client id in header.
 	string headerClientId = "Client-ID: " + ConfigData.clientID_M3U8;
+	string debug_headerClientId = headerClientId;
+	if (!showSensitiveInfo) debug_headerClientId.replace(ConfigData.clientID_M3U8, "(hidden)");
 
 	bool isVod = path.find("twitch.tv/videos/") > 0;
-	if (path.find("clips.twitch.tv") >= 0 ||
-		HostRegExpParse(path, "/clip/" + getReg()).length() > 0) {
-		return ClipsParse(path, MetaData, QualityList, headerClientId);
+	bool pathContainsClipsSubdomain = path.find("clips.twitch.tv") >= 0;
+	bool pathContainsClipSubdirectory = HostRegExpParse(path, "/clip/" + getReg()).length() > 0;
+	bool isClip = (pathContainsClipsSubdomain || pathContainsClipSubdirectory);
+	if (isClip) {
+		/// DEBUG OUTPUT
+		debug_msg = ""
+		+ "## headerClientId: " + debug_headerClientId + "\n"
+		+ "## isVod: " + ConvertBooleanToString(isVod);
+		HostPrintUTF8(debug_msg);
+
+		value = ClipsParse(path, MetaData, QualityList, headerClientId);
+
+		HostPrintUTF8("#### </PlayItemParse> ####");
+		return value;
 	}
 
 	string nickname = HostRegExpParse(path, "twitch.tv/" + getReg());
@@ -354,10 +559,9 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	if (isVod) {
 		vodId = HostRegExpParse(path, "twitch.tv/videos/([0-9]+)");
 	}
-	HostPrintUTF8(vodId);
-// 	https://usher.ttvnw.net/vod/
-//  https://api.twitch.tv/api/vods/
 
+	// 	https://usher.ttvnw.net/vod/
+	//  https://api.twitch.tv/api/vods/
 	// Parameter p should be random number.
 	string m3u8Api = (isVod
 		? "https://usher.ttvnw.net/vod/" + vodId
@@ -372,6 +576,18 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	+ "supported_codecs=avc1";
 	// &sig={token_sig}&token={token}
 
+	/// DEBUG OUTPUT
+	debug_msg = ""
+	+ "## headerClientId: " + debug_headerClientId + "\n"
+	+ "## isVod: " + ConvertBooleanToString(isVod) + "\n"
+	+ "## m3u8Api: " + m3u8Api + "\n"
+	+ "## ApiBase: " + ApiBase + "\n"
+	+ "## nickname: " + nickname + "\n"
+	+ "## vodId: " + vodId + "\n"
+	+ "## urlSuffix: " + (!isVod ? "/helix/streams?user_login=" + nickname : "/kraken/videos/v" + vodId) + "\n"
+	+ "## Getting stream information via SendTwitchAPIRequest...";
+	HostPrintUTF8(debug_msg);
+
 	// Get information of current stream.
 	// string idChannel = HostRegExpParse(jsonToken, ":([0-9]+)");
 	JsonValue stream = SendTwitchAPIRequest(ApiBase + (!isVod
@@ -379,19 +595,20 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		: "/kraken/videos/v" + vodId));
 		// Helix API can't give to us game_id from video_id.
 		//: "videos?id=" + vodId));
+	bool streamIsArray = stream.isArray();
+	bool streamIsLegacyVod = (!stream.isArray() && stream.isObject());
 	string titleStream;
 	string displayName;
 	string views = "";
 	string gameId;
 	string game;
-	if (stream.isArray()) {
+	if (streamIsArray) {
 		JsonValue item = stream[0];
 		titleStream = item["title"].asString();
 		displayName = item["user_name"].asString();
 		gameId = item["game_id"].asString();
-		HostPrintUTF8(gameId);
 		views = item[isVod ? "view_count" : "viewer_count"].asString();
-	} else if (stream.isObject()) { // This is legacy VOD.
+	} else if (streamIsLegacyVod) { // This is legacy VOD.
 		titleStream = stream["title"].asString();
 		views = stream["views"].asString();
 		displayName = stream["channel"]["display_name"].asString();
@@ -403,6 +620,18 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		}
 	}
 
+	/// DEBUG OUTPUT
+	debug_msg = ""
+	+ "## streamIsArray: " + ConvertBooleanToString(streamIsArray) + "\n"
+	+ "## streamIsLegacyVod: " + ConvertBooleanToString(streamIsLegacyVod) + "\n"
+	+ "## titleStream: " + titleStream + "\n"
+	+ "## displayName: " + displayName + "\n"
+	+ "## views: " + views + "\n"
+	+ "## gameId: " + gameId + "\n"
+	+ "## game: " + game + "\n"
+	+ "## Geting stream token...";
+	HostPrintUTF8(debug_msg);
+
 	// Firstly we need to request for api to get pretty weirdly token and sig.
 	JsonValue weirdToken = isVod
 		? VodTokenRequest(vodId)
@@ -411,16 +640,25 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	string sig = "&sig=" + weirdToken["signature"].asString();
 	string token = "&token=" + HostUrlEncode(weirdToken["value"].asString());
 
+	/// DEBUG OUTPUT
+	debug_msg = ""
+	+ "## tokenType: " + (isVod ? "VodToken" : "LiveToken") + "\n"
+	+ "## sig: " + sig + "\n"
+	+ "## token: " + token + "\n"
+	+ "## Getting list of M3U8 URLs...";
+	HostPrintUTF8(debug_msg);
+
 	// Second request to get list of *.m3u8 urls.
 	string jsonM3u8 = HostUrlGetString(m3u8Api + sig + token, "", headerClientId);
 	jsonM3u8.replace('"', "");
 
 	string m3 = ".m3u8";
-
 	string sourceQualityUrl = "https://" + HostRegExpParse(jsonM3u8, "https://([a-zA-Z-_.0-9/]+)" + m3) + m3;
+	array<string> arrayOfM3u8 = {"list is empty"};
 
+	/// TODO: verbose output of array
 	if (@QualityList !is null) {
-		array<string> arrayOfM3u8 = jsonM3u8.split("#EXT-X-MEDIA:");
+		arrayOfM3u8 = jsonM3u8.split("#EXT-X-MEDIA:");
 		for (int k = 1, len = arrayOfM3u8.size(); k < len; k++) {
 			string currentM3u8 = arrayOfM3u8[k];
 			string currentQuality = HostRegExpParse(currentM3u8, "NAME=([a-zA-Z-_.0-9/ ()]+)");
@@ -453,5 +691,21 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	MetaData["content"] = "— " + titleStream + (ConfigData.gameInContent ? game : "");
 	MetaData["viewCount"] = views;
 	MetaData["author"] = displayName;
+
+	/// DEBUG OUTPUT
+	debug_msg = ""
+	+ "## jsonM3u8: " + jsonM3u8 + "\n"
+	+ "## sourceQualityUrl: " + sourceQualityUrl + "\n"
+	/// If not null, then false; If null, then true.
+	+ "## QualityListIsNull: " + ((@QualityList !is null) ? "false" : "true") + "\n"
+	/// Need DictionaryToString
+	//+ "## MetaData[\"title\"]: " + MetaData["title"].asString() + "\n"
+	//+ "## MetaData[\"content\"]: " + MetaData["content"] + "\n"
+	//+ "## MetaData[\"viewCount\"]: " + MetaData["viewCount"] + "\n"
+	//+ "## MetaData[\"author\"]: " + MetaData["author"] + "\n"
+	+ "## Returning string 'sourceQualityUrl'...";
+	HostPrintUTF8(debug_msg);
+
+	HostPrintUTF8("#### </PlayItemParse> ####");
 	return sourceQualityUrl;
 }

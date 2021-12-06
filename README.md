@@ -19,6 +19,17 @@ If you do not trust proxy, you can enter your credentials to the `config.ini`.
 - Copy your client id and paste it to the `config.ini`.
 - Copy your client secret and paste it to the `config.ini`.
 - Launch PotPlayer and test it.
+- If unsure if it worked...
+    1. In "MediaPlayParse - Twitch.as", set `debug` to `true`.
+    2. If things look normal there, set `debug` back to `false`.
+    3. If it still doesn't work, open "MediaUrlList - Twitch.as" and set *its* `debug` to `true`.
+    4. When you're finished, set both `debug` variables to `false`.
+
+##### ./Media/PlayParse/MediaPlayParse - Twitch.as
+See [Media/PlayParse/config.ini](https://github.com/TwitchPotPlayer/TwitchPotPlayer/blob/master/Media/PlayParse/config.ini).
+
+##### ./Media/UrlList/MediaUrlList - Twitch.as
+See [Media/UrlList/config.ini](https://github.com/TwitchPotPlayer/TwitchPotPlayer/blob/master/Media/UrlList/config.ini).
 
 # Installation
 - Just download this repository.
@@ -54,4 +65,3 @@ So you need to put your username in `Media/UrlList/config.ini`.
 After this open PotPlayer and press `Ctrl + U`, you will see following window.
 
 ![image](https://user-images.githubusercontent.com/4051126/41672965-0ed9f11c-74c4-11e8-8643-efe8622cca91.png)
-
