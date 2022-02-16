@@ -112,7 +112,7 @@ JsonValue SendTwitchAPIRequest(string request) {
 string GetAppAccessToken() {
 	if (!ConfigData.useOwnCredentials) {
 		ConfigData.clientID = "g5zg0400k4vhrx2g6xi4hgveruamlv";
-		return "6jftlp4naa4e7esxe3favcmjfno2qw";
+		return "v4ks0wxfnsjzp7uwrcf8niiqwj64jy";
 	}
 	if (ConfigData.clientID == "" || ConfigData.clientSecret == "") {
 		return "";
