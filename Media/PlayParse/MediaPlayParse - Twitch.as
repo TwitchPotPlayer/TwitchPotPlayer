@@ -156,9 +156,8 @@ JsonValue ParseJsonFromRequest(string json) {
 }
 
 JsonValue SendTwitchAPIRequest(string request) {
-	string v5 = (request.find("kraken") > 0) ? "\naccept: application/vnd.twitchtv.v5+json" : "";
 	string helix = (request.find("helix") > 0) ? "\nAuthorization: Bearer " + Authorization : "";
-	string header = "Client-ID: " + ConfigData.clientID + v5 + helix;
+	string header = "Client-ID: " + ConfigData.clientID + helix;
 	if (!IsTwitch) {
 		header = "";
 	}
@@ -376,9 +375,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 	// string idChannel = HostRegExpParse(jsonToken, ":([0-9]+)");
 	JsonValue stream = SendTwitchAPIRequest(ApiBase + (!isVod
 		? "/helix/streams?user_login=" + nickname
-		: "/kraken/videos/v" + vodId));
-		// Helix API can't give to us game_id from video_id.
-		//: "videos?id=" + vodId));
+		: "/helix/videos?id=" + vodId));
 	string titleStream;
 	string displayName;
 	string views = "";
@@ -388,8 +385,14 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		JsonValue item = stream[0];
 		titleStream = item["title"].asString();
 		displayName = item["user_name"].asString();
-		gameId = item["game_id"].asString();
-		HostPrintUTF8(gameId);
+		// Helix API can't give to us game_id from video_id.
+		if (isVod) {
+			game = "";
+			gameId = "";
+		} else {
+			gameId = item["game_id"].asString();
+		}
+		HostPrintUTF8("Game ID: " + gameId);
 		views = item[isVod ? "view_count" : "viewer_count"].asString();
 	} else if (stream.isObject()) { // This is legacy VOD.
 		titleStream = stream["title"].asString();
@@ -398,7 +401,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		game = " | " + stream["game"].asString();
 	}
 	if (ConfigData.gameInTitle || ConfigData.gameInContent) {
-		if (game == "") {
+		if (game == "" && gameId != "") {
 			game = GetGameFromId(gameId);
 		}
 	}
