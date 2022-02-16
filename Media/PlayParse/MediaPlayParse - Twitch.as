@@ -181,7 +181,7 @@ JsonValue SendGraphQLRequest(string request) {
 		"",
 		headers,
 		request);
-	HostPrintUTF8("JSON");
+	HostPrintUTF8("GQL JSON");
 	HostPrintUTF8(json);
 	return ParseJsonFromRequest(json)["data"];
 }
@@ -240,6 +240,30 @@ string PlaybackTokenBodyRequest(string function, string firstParameter) {
 	return s;
 }
 
+string NielsenContentMetadataBodyRequest(string vodId) {
+	string hash = "2dbf505ee929438369e68e72319d1106bb3c142e295332fac157c90638968586";
+	string s = "";
+	s += '{';
+	s += '    "operationName":"NielsenContentMetadata",';
+	s += '    "variables": {';
+	s += '        "isCollectionContent":false,';
+	s += '        "isLiveContent":false,';
+	s += '        "isVODContent":true,';
+	s += '        "collectionID":"",';
+	s += '        "login":"",';
+	s += '        "vodID": "' + vodId + '"';
+	s += '    },';
+	s += '    "extensions": {';
+	s += '        "persistedQuery": {';
+	s += '            "version": 1,';
+	s += '            "sha256Hash": "' + hash + '"';
+	s += '        }';
+	s += '    }';
+	s += '}';
+
+	return s;
+}
+
 JsonValue LiveTokenRequest(string nickname) {
 	string function = "streamPlaybackAccessToken";
 	return SendGraphQLRequest(PlaybackTokenBodyRequest(
@@ -260,6 +284,11 @@ string GetGameFromId(string id) {
 		return " | " + game[0]["name"].asString();
 	}
 	return "";
+}
+
+string GetGameFromVodId(string vodId) {
+	string body = NielsenContentMetadataBodyRequest(vodId);
+	return SendGraphQLRequest(body)["video"]["game"]["displayName"].asString();
 }
 
 int GetITag(const string &in qualityName) {
@@ -387,8 +416,7 @@ string PlayitemParse(const string &in path, dictionary &MetaData, array<dictiona
 		displayName = item["user_name"].asString();
 		// Helix API can't give to us game_id from video_id.
 		if (isVod) {
-			game = "";
-			gameId = "";
+			game = " | " + GetGameFromVodId(vodId);
 		} else {
 			gameId = item["game_id"].asString();
 		}
