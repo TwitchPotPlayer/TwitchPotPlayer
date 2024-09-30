@@ -106,7 +106,7 @@ Config ReadConfigFile() {
 	config.oauthToken = config.parse("oauthToken=oauth:");
 	config.useOwnCredentials = config.isTrue("useOwnCredentials");
 	// This ClientID is used only for getting the m3u8 playlist.
-	config.clientID_M3U8 = "kimne78kx3ncx6brgo4mv6wki5h1ko";
+	config.clientID_M3U8 = "ue6666qo983tsx6so1t0vnawi233wa";
 	return config;
 }
 
